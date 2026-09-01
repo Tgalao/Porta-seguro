@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# ficheiros de ambiente: nunca vão para o GitHub porque contêm passwords e chaves.
+# A única exceção é o .env.example, que só tem os NOMES das variáveis.
 .env*
+!.env.example
 
 # vercel
 .vercel
