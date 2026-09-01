@@ -38,6 +38,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# ficheiro de log usado para arrancar o servidor de desenvolvimento em segundo plano
+dev.log
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
