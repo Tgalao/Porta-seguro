@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { exigirSessao } from "@/lib/permissoes";
 import { signOut } from "@/auth";
 
@@ -28,6 +29,15 @@ export default async function Painel({
         Sessão iniciada como <strong>{sessao.user.name}</strong> (
         {sessao.user.perfil})
       </p>
+
+      {(sessao.user.perfil === "porteiro" || sessao.user.perfil === "admin") && (
+        <Link
+          href="/portaria"
+          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          Ir para a portaria
+        </Link>
+      )}
 
       <form
         action={async () => {
