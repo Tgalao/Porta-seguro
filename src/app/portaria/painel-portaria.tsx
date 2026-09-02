@@ -4,9 +4,14 @@ import { useRef, useState, useTransition } from "react";
 import {
   registarEntradaOuSaida,
   confirmarSaidaComPais,
+  lerCodigoQR,
+  confirmarIdentidadeQR,
   type AlunoResumo,
   type LinhaRegisto,
+  type ResultadoIdentificacao,
 } from "./acoes";
+import type { MetodoRegisto } from "@/lib/constantes";
+import { LeitorQR } from "./leitor-qr";
 
 type Estado =
   | { passo: "vazio" }
@@ -18,7 +23,9 @@ type Estado =
       motivo: string;
       horarioId?: string;
       momentoISO: string;
-    };
+      metodo: MetodoRegisto;
+    }
+  | { passo: "confirmar-identidade"; aluno: AlunoResumo };
 
 const ROTULOS_ESTADO: Record<string, string> = {
   autorizado: "Autorizado",
@@ -33,10 +40,38 @@ const ROTULOS_TIPO: Record<string, string> = {
 
 export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegisto[] }) {
   const [numeroCartao, setNumeroCartao] = useState("");
+  const [modoQR, setModoQR] = useState(false);
   const [estado, setEstado] = useState<Estado>({ passo: "vazio" });
   const [linhas, setLinhas] = useState<LinhaRegisto[]>(linhasIniciais);
   const [aEnviar, iniciarTransicao] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /** Comum ao cartão e à confirmação de identidade do QR — ambos devolvem
+   * o mesmo formato (ok / pendente / resultado final). */
+  function aplicarResultadoIdentificacao(resultado: ResultadoIdentificacao) {
+    if (!resultado.ok) {
+      setEstado({ passo: "erro", mensagem: resultado.erro });
+      return;
+    }
+    if (resultado.pendente) {
+      setEstado({
+        passo: "pendente",
+        aluno: resultado.aluno,
+        motivo: resultado.motivo,
+        horarioId: resultado.horarioId,
+        momentoISO: resultado.momentoISO,
+        metodo: resultado.metodo,
+      });
+      return;
+    }
+    setEstado({
+      passo: "resultado",
+      aluno: resultado.aluno,
+      autorizado: resultado.autorizado,
+      motivo: resultado.motivo,
+    });
+    setLinhas((atuais) => [resultado.linha, ...atuais]);
+  }
 
   function submeterCartao(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -45,40 +80,21 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
 
     iniciarTransicao(async () => {
       const resultado = await registarEntradaOuSaida(cartao);
-
-      if (!resultado.ok) {
-        setEstado({ passo: "erro", mensagem: resultado.erro });
-      } else if (resultado.pendente) {
-        setEstado({
-          passo: "pendente",
-          aluno: resultado.aluno,
-          motivo: resultado.motivo,
-          horarioId: resultado.horarioId,
-          momentoISO: resultado.momentoISO,
-        });
-      } else {
-        setEstado({
-          passo: "resultado",
-          aluno: resultado.aluno,
-          autorizado: resultado.autorizado,
-          motivo: resultado.motivo,
-        });
-        setLinhas((atuais) => [resultado.linha, ...atuais]);
-      }
-
+      aplicarResultadoIdentificacao(resultado);
       inputRef.current?.focus();
     });
   }
 
   function responderContactoPais(paisAutorizaram: boolean) {
     if (estado.passo !== "pendente") return;
-    const { aluno, horarioId, momentoISO } = estado;
+    const { aluno, horarioId, momentoISO, metodo } = estado;
 
     iniciarTransicao(async () => {
       const resultado = await confirmarSaidaComPais(
         aluno.id,
         horarioId,
         momentoISO,
+        metodo,
         paisAutorizaram,
       );
 
@@ -96,6 +112,46 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
           : "Pais contactados; saída não autorizada.",
       });
       setLinhas((atuais) => [resultado.linha, ...atuais]);
+      inputRef.current?.focus();
+    });
+  }
+
+  function aoLerTokenQR(token: string) {
+    setModoQR(false);
+    iniciarTransicao(async () => {
+      const resultado = await lerCodigoQR(token);
+
+      if (!resultado.ok) {
+        setEstado({ passo: "erro", mensagem: resultado.erro });
+        return;
+      }
+      setEstado({ passo: "confirmar-identidade", aluno: resultado.aluno });
+    });
+  }
+
+  function responderIdentidade(eEsteAluno: boolean) {
+    if (estado.passo !== "confirmar-identidade") return;
+    const { aluno } = estado;
+
+    iniciarTransicao(async () => {
+      const resultado = await confirmarIdentidadeQR(aluno.id, eEsteAluno);
+
+      if (!resultado.ok) {
+        setEstado({ passo: "erro", mensagem: resultado.erro });
+        return;
+      }
+      if ("identidadeRejeitada" in resultado) {
+        // Nada foi registado — só a ocorrência (RF16) — por isso a tabela
+        // de registos de hoje não muda.
+        setEstado({
+          passo: "resultado",
+          aluno: resultado.aluno,
+          autorizado: false,
+          motivo: resultado.motivo,
+        });
+        return;
+      }
+      aplicarResultadoIdentificacao(resultado);
       inputRef.current?.focus();
     });
   }
@@ -120,7 +176,17 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
         >
           Identificar
         </button>
+        <button
+          type="button"
+          onClick={() => setModoQR((atual) => !atual)}
+          disabled={aEnviar}
+          className="rounded border px-4 py-2 text-sm hover:bg-black/5 disabled:opacity-50 dark:hover:bg-white/10"
+        >
+          {modoQR ? "Cancelar leitura QR" : "Ler código QR"}
+        </button>
       </form>
+
+      {modoQR && <LeitorQR onLido={aoLerTokenQR} />}
 
       {estado.passo === "erro" && (
         <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
@@ -133,6 +199,32 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
           <p className="font-semibold">{estado.aluno.nome}</p>
           {estado.aluno.turma && <p className="text-sm opacity-70">{estado.aluno.turma}</p>}
           <p className="text-sm">{estado.motivo}</p>
+        </Semaforo>
+      )}
+
+      {estado.passo === "confirmar-identidade" && (
+        <Semaforo cor="amarelo">
+          <p className="font-semibold">{estado.aluno.nome}</p>
+          {estado.aluno.turma && <p className="text-sm opacity-70">{estado.aluno.turma}</p>}
+          <p className="mt-2 text-sm font-medium">É esta a pessoa à tua frente?</p>
+          <div className="mt-1 flex gap-2">
+            <button
+              type="button"
+              onClick={() => responderIdentidade(true)}
+              disabled={aEnviar}
+              className="rounded border px-3 py-1 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              Sim
+            </button>
+            <button
+              type="button"
+              onClick={() => responderIdentidade(false)}
+              disabled={aEnviar}
+              className="rounded border px-3 py-1 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              Não é esta pessoa
+            </button>
+          </div>
         </Semaforo>
       )}
 
