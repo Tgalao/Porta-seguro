@@ -39,6 +39,15 @@ export default async function Painel({
         </Link>
       )}
 
+      {(sessao.user.perfil === "porteiro" || sessao.user.perfil === "admin") && (
+        <Link
+          href="/consultas"
+          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          Consultar assiduidade
+        </Link>
+      )}
+
       {sessao.user.perfil === "aluno" && (
         <Link
           href="/area-pessoal"
