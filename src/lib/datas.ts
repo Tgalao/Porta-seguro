@@ -185,6 +185,21 @@ export function limitesDoDiaEmLisboa(data: Date): { inicio: Date; fim: Date } {
   return { inicio, fim };
 }
 
+/**
+ * Os limites `[inicio, fim)` (UTC) de um mês civil de Lisboa — usado nas
+ * consultas de assiduidade (RF07: "por mês"). `mes` vai de 1 a 12.
+ *
+ * O meio-dia (12h) no dia 1, em UTC, cai sempre dentro do mesmo dia civil em
+ * Lisboa (o deslocamento do fuso nunca chega a 12h) — por isso serve de
+ * "candidato" seguro para depois pedir a `limitesDoDiaEmLisboa` a meia-noite
+ * verdadeira desse dia.
+ */
+export function limitesDoMesEmLisboa(ano: number, mes: number): { inicio: Date; fim: Date } {
+  const inicio = limitesDoDiaEmLisboa(new Date(Date.UTC(ano, mes - 1, 1, 12))).inicio;
+  const fim = limitesDoDiaEmLisboa(new Date(Date.UTC(ano, mes, 1, 12))).inicio;
+  return { inicio, fim };
+}
+
 /** Só a hora. Exemplo: "14:30". */
 export function formatarHora(data: Date): string {
   return new Intl.DateTimeFormat("pt-PT", {

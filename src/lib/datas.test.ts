@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { limitesDoDiaEmLisboa, diaDaSemanaEmLisboa } from "./datas";
+import { limitesDoDiaEmLisboa, diaDaSemanaEmLisboa, limitesDoMesEmLisboa } from "./datas";
 
 describe("limitesDoDiaEmLisboa", () => {
   it("em janeiro (UTC+0), meia-noite de Lisboa coincide com meia-noite UTC", () => {
@@ -20,5 +20,24 @@ describe("limitesDoDiaEmLisboa", () => {
     expect(momento.getTime()).toBeGreaterThanOrEqual(inicio.getTime());
     expect(momento.getTime()).toBeLessThan(fim.getTime());
     expect(diaDaSemanaEmLisboa(inicio)).toBe(diaDaSemanaEmLisboa(momento));
+  });
+});
+
+describe("limitesDoMesEmLisboa", () => {
+  it("janeiro (UTC+0): vai da meia-noite do dia 1 à meia-noite de 1 de fevereiro", () => {
+    const { inicio, fim } = limitesDoMesEmLisboa(2026, 1);
+    expect(inicio.toISOString()).toBe("2026-01-01T00:00:00.000Z");
+    expect(fim.toISOString()).toBe("2026-02-01T00:00:00.000Z");
+  });
+
+  it("julho (UTC+1): a fronteira cai às 23:00 UTC do último dia de junho", () => {
+    const { inicio, fim } = limitesDoMesEmLisboa(2026, 7);
+    expect(inicio.toISOString()).toBe("2026-06-30T23:00:00.000Z");
+    expect(fim.toISOString()).toBe("2026-07-31T23:00:00.000Z");
+  });
+
+  it("dezembro: o fim é o início de janeiro do ano seguinte", () => {
+    const { fim } = limitesDoMesEmLisboa(2026, 12);
+    expect(fim.toISOString()).toBe("2027-01-01T00:00:00.000Z");
   });
 });
