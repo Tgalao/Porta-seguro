@@ -39,6 +39,15 @@ export default async function Painel({
         </Link>
       )}
 
+      {sessao.user.perfil === "aluno" && (
+        <Link
+          href="/area-pessoal"
+          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          O meu código QR
+        </Link>
+      )}
+
       <form
         action={async () => {
           "use server";
