@@ -163,6 +163,28 @@ export function formatarData(data: Date): string {
   }).format(data);
 }
 
+/**
+ * Devolve o instante UTC correspondente à meia-noite de Lisboa do dia em que
+ * cai `data`, e o instante UTC da meia-noite seguinte — o intervalo
+ * `[inicio, fim)` a usar numa consulta Mongo do tipo "registos de hoje".
+ *
+ * Não existe uma forma direta de construir "meia-noite em Lisboa" com
+ * `Date.UTC` (essa função só percebe UTC). O truque: criamos um candidato à
+ * meia-noite como se as horas locais fossem UTC, vemos que horas esse
+ * instante marca em Lisboa (0h mais o deslocamento do fuso nesse dia) e
+ * corrigimos a diferença — funciona também nos dias de mudança de hora,
+ * porque o deslocamento é lido a partir do próprio candidato.
+ */
+export function limitesDoDiaEmLisboa(data: Date): { inicio: Date; fim: Date } {
+  const { ano, mes, dia } = partesEmLisboa(data);
+  const candidato = new Date(Date.UTC(ano, mes - 1, dia, 0, 0, 0));
+  const desvioMinutos = minutosDoDiaEmLisboa(candidato);
+
+  const inicio = new Date(candidato.getTime() - desvioMinutos * 60 * 1000);
+  const fim = new Date(inicio.getTime() + 24 * 60 * 60 * 1000);
+  return { inicio, fim };
+}
+
 /** Só a hora. Exemplo: "14:30". */
 export function formatarHora(data: Date): string {
   return new Intl.DateTimeFormat("pt-PT", {
