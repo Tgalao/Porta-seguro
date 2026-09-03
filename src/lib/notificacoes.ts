@@ -12,19 +12,22 @@
  */
 
 import { formatarDataHora } from "@/lib/datas";
-import type { Perfil } from "@/lib/constantes";
+import type { Perfil, TipoRegisto } from "@/lib/constantes";
 
-export async function notificarLogin(
-  nome: string,
-  email: string,
-  perfil: Perfil,
-): Promise<void> {
+/**
+ * Envia um email pela API do Resend. Nunca lança — quem chamar isto nunca
+ * fica bloqueado por uma falha de email (chave em falta, Resend em baixo,
+ * destinatário não verificado); o problema fica só no log do servidor.
+ *
+ * "onboarding@resend.dev" é o remetente de testes do Resend: funciona sem
+ * verificar um domínio próprio, mas só entrega ao(s) email(s) com que a
+ * conta Resend foi criada — sem verificar um domínio, enviar para outros
+ * endereços falha (fica registado no log, não é um erro visível para quem
+ * usa o sistema).
+ */
+async function enviarEmail(destinatario: string, assunto: string, texto: string): Promise<void> {
   const chave = process.env.RESEND_API_KEY;
-  const destinatario = process.env.EMAIL_ALERTA_ADMIN;
-
-  // Sem configuração, não faz nada — não é um requisito do sistema, só um
-  // alerta extra para quem o quiser ativar.
-  if (!chave || !destinatario) return;
+  if (!chave) return;
 
   try {
     const resposta = await fetch("https://api.resend.com/emails", {
@@ -34,24 +37,63 @@ export async function notificarLogin(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // "onboarding@resend.dev" é o remetente de testes do Resend: funciona
-        // sem verificar um domínio próprio, mas só entrega ao email com que a
-        // conta Resend foi criada — daí `EMAIL_ALERTA_ADMIN` ter de ser esse
-        // mesmo email.
         from: "PortãoSeguro <onboarding@resend.dev>",
         to: destinatario,
-        subject: `PortãoSeguro: login de ${nome}`,
-        text:
-          `${nome} (${email}, perfil "${perfil}") entrou no PortãoSeguro às ` +
-          `${formatarDataHora(new Date())}.\n\n` +
-          "Se não reconheces este acesso, muda a palavra-passe dessa conta.",
+        subject: assunto,
+        text: texto,
       }),
     });
 
     if (!resposta.ok) {
-      console.error("Resend recusou o email de alerta de login:", await resposta.text());
+      console.error(`Resend recusou o email para ${destinatario}:`, await resposta.text());
     }
   } catch (erro) {
-    console.error("Falha ao enviar o email de alerta de login:", erro);
+    console.error(`Falha ao enviar email para ${destinatario}:`, erro);
   }
+}
+
+/** Alerta ao administrador sempre que alguém faz login (endurecimento de
+ * segurança — não fazia parte da análise original, decisão do aluno). */
+export async function notificarLogin(
+  nome: string,
+  email: string,
+  perfil: Perfil,
+): Promise<void> {
+  const destinatario = process.env.EMAIL_ALERTA_ADMIN;
+  if (!destinatario) return;
+
+  await enviarEmail(
+    destinatario,
+    `PortãoSeguro: login de ${nome}`,
+    `${nome} (${email}, perfil "${perfil}") entrou no PortãoSeguro às ` +
+      `${formatarDataHora(new Date())}.\n\n` +
+      "Se não reconheces este acesso, muda a palavra-passe dessa conta.",
+  );
+}
+
+/**
+ * Avisa o próprio aluno (por email) sempre que tem uma entrada ou saída
+ * registada na portaria — decisão do aluno, para poder acompanhar em tempo
+ * real quando entra/sai da escola.
+ *
+ * Manda-se para o email da CONTA do aluno (não para um admin fixo): cada
+ * aluno só recebe avisos sobre si próprio.
+ */
+export async function notificarMovimento(
+  nomeAluno: string,
+  emailAluno: string,
+  tipo: TipoRegisto,
+  autorizado: boolean,
+  motivo: string,
+  momento: Date,
+): Promise<void> {
+  const tipoTexto = tipo === "entrada" ? "Entrada" : "Saída";
+  const estadoTexto = autorizado ? "autorizada" : "NÃO autorizada";
+
+  await enviarEmail(
+    emailAluno,
+    `PortãoSeguro: ${tipoTexto.toLowerCase()} registada — ${formatarDataHora(momento)}`,
+    `${tipoTexto} ${estadoTexto} para ${nomeAluno}, às ${formatarDataHora(momento)}.\n\n` +
+      `Motivo: ${motivo}`,
+  );
 }

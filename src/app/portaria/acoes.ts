@@ -29,6 +29,7 @@ import { formatarHora } from "@/lib/datas";
 import { Utilizador, Turma, Horario, Registo, Ocorrencia, TokenQR } from "@/models";
 import type { IUtilizador } from "@/models";
 import { decidirEntrada, decidirSaida, validarTokenQR } from "@/lib/regras";
+import { notificarMovimento } from "@/lib/notificacoes";
 import type { TipoRegisto, EstadoRegisto, MetodoRegisto } from "@/lib/constantes";
 
 export interface AlunoResumo {
@@ -73,6 +74,7 @@ type AlunoParaMovimento = Pick<
   IUtilizador,
   | "_id"
   | "nomeCompleto"
+  | "email"
   | "fotoUrl"
   | "numeroAluno"
   | "turmaId"
@@ -142,6 +144,15 @@ async function processarIdentificacao(
       });
     }
 
+    await notificarMovimento(
+      aluno.nomeCompleto,
+      aluno.email,
+      "entrada",
+      decisao.autorizado,
+      decisao.motivo,
+      momento,
+    );
+
     return {
       ok: true,
       pendente: false,
@@ -187,6 +198,8 @@ async function processarIdentificacao(
     horarioId: decisao.horarioId,
     registadoPorId,
   });
+
+  await notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", true, decisao.motivo, momento);
 
   return {
     ok: true,
@@ -250,6 +263,9 @@ export async function confirmarSaidaComPais(
   }
 
   const momento = new Date(momentoISO);
+  const motivo = paisAutorizaram
+    ? "Saída fora do horário confirmada por telefone com os pais."
+    : "Pais contactados; saída não autorizada.";
 
   const registo = await Registo.create({
     alunoId: aluno._id,
@@ -257,13 +273,13 @@ export async function confirmarSaidaComPais(
     tipo: "saida",
     metodo,
     estado: paisAutorizaram ? "confirmado_pais" : "nao_autorizado",
-    motivo: paisAutorizaram
-      ? "Saída fora do horário confirmada por telefone com os pais."
-      : "Pais contactados; saída não autorizada.",
+    motivo,
     horarioId,
     registadoPorId: sessao.user.id,
     confirmacaoPais: paisAutorizaram,
   });
+
+  await notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", paisAutorizaram, motivo, momento);
 
   return {
     ok: true,
