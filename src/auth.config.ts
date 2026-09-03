@@ -21,6 +21,13 @@ export const authConfig = {
 
   session: {
     strategy: "jwt",
+    // Um dia letivo. O perfil viaja dentro do próprio token e não é
+    // reconfirmado na base de dados a cada pedido (seria uma consulta
+    // extra sempre) — ou seja, um aluno apagado ou suspenso continuaria a
+    // entrar enquanto o token fosse válido. Com o valor por omissão do
+    // Auth.js (30 dias) isso era um mês; oito horas fecham a janela sem
+    // obrigar o porteiro a voltar a autenticar-se a meio da manhã.
+    maxAge: 8 * 60 * 60,
   },
 
   callbacks: {
