@@ -11,6 +11,13 @@ import { entrarComCredenciais } from "./acoes";
 export function FormularioCredenciais() {
   const [erro, acao, aEnviar] = useActionState(entrarComCredenciais, undefined);
   const [passwordVisivel, setPasswordVisivel] = useState(false);
+  // Campos "controlados" de propósito: depois de uma Server Action que não
+  // navega para outra página (ex.: login recusado), o browser repõe o
+  // <form> nativo aos valores iniciais — apagava o que a pessoa tinha
+  // escrito. Guardar o valor no estado do React sobrevive a esse reset,
+  // porque é o React a decidir o que aparece no campo, não o browser.
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <form action={acao} className="flex flex-col gap-3">
@@ -21,6 +28,8 @@ export function FormularioCredenciais() {
           name="email"
           required
           autoComplete="email"
+          value={email}
+          onChange={(evento) => setEmail(evento.target.value)}
           className="rounded border px-3 py-2 dark:bg-transparent"
         />
       </label>
@@ -33,6 +42,8 @@ export function FormularioCredenciais() {
             name="password"
             required
             autoComplete="current-password"
+            value={password}
+            onChange={(evento) => setPassword(evento.target.value)}
             className="w-full rounded border px-3 py-2 pr-10 dark:bg-transparent"
           />
           <button
