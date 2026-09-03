@@ -3,6 +3,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { partesEmLisboa } from "@/lib/datas";
 import { Utilizador, Turma } from "@/models";
 import { FiltroConsulta } from "./filtro-consulta";
+import { LinkVoltarPainel } from "@/components/link-voltar-painel";
 
 /**
  * Ecrã de consultas e listagem (UC02/UC04): assiduidade por aluno, por
@@ -26,6 +27,7 @@ export default async function PaginaConsultas() {
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
+      <LinkVoltarPainel />
       <h1 className="text-2xl font-bold">Consultas de assiduidade</h1>
       <FiltroConsulta
         alunos={alunos.map((a) => ({ id: a._id.toString(), nome: a.nomeCompleto }))}

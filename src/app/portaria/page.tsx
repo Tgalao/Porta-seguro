@@ -3,6 +3,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { limitesDoDiaEmLisboa, formatarHora } from "@/lib/datas";
 import { Registo, Utilizador } from "@/models";
 import { PainelPortaria } from "./painel-portaria";
+import { LinkVoltarPainel } from "@/components/link-voltar-painel";
 import type { LinhaRegisto } from "./acoes";
 
 /**
@@ -38,6 +39,7 @@ export default async function PaginaPortaria() {
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
+      <LinkVoltarPainel />
       <h1 className="text-2xl font-bold">Portaria</h1>
       <PainelPortaria linhasIniciais={linhasIniciais} />
     </main>
