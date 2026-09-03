@@ -67,7 +67,12 @@ export async function notificarLogin(
     `PortãoSeguro: login de ${nome}`,
     `${nome} (${email}, perfil "${perfil}") entrou no PortãoSeguro às ` +
       `${formatarDataHora(new Date())}.\n\n` +
-      "Se não reconheces este acesso, muda a palavra-passe dessa conta.",
+      // Não há troca de palavra-passe self-service no sistema — só um admin
+      // pode mudar a de outra pessoa (src/app/admin/alunos/acoes.ts). Por
+      // isso a instrução aponta para o informático da escola, não para um
+      // link que não existe.
+      "Se não reconheces este acesso, dirige-te ao informático da escola " +
+      "e pede para trocar a palavra-passe dessa conta.",
   );
 }
 
