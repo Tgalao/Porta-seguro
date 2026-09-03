@@ -6,6 +6,7 @@ import { authConfig } from "./auth.config";
 import { autorizarCredenciais } from "@/lib/autenticacao";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador } from "@/models";
+import { notificarLogin } from "@/lib/notificacoes";
 
 /**
  * Configuração completa do Auth.js, com os dois fornecedores de login
@@ -58,6 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // base de dados e confirmou tudo.
         token.idUtilizador = user.id;
         token.perfil = user.perfil;
+        await notificarLogin(user.name ?? user.email ?? "?", user.email ?? "", user.perfil);
       } else if (user?.email) {
         // Veio do fornecedor Google — o perfil de acesso vem sempre da
         // NOSSA base de dados (o Google não sabe se a pessoa é porteiro,
@@ -70,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.idUtilizador = utilizador._id.toString();
           token.perfil = utilizador.perfil;
           token.name = utilizador.nomeCompleto;
+          await notificarLogin(utilizador.nomeCompleto, utilizador.email, utilizador.perfil);
         }
       }
       return token;
