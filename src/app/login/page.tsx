@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { FormularioCredenciais } from "./formulario-credenciais";
@@ -16,24 +15,10 @@ export default async function PaginaLogin() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center p-8">
-      <div className="relative w-full max-w-sm rounded-lg border p-6">
-        <Image
-          src="/logo-escola.png"
-          alt="Escola Comércio Lisboa"
-          width={1400}
-          height={596}
-          className="absolute top-4 right-4 h-6 w-auto opacity-90"
-        />
-
+      <div className="w-full max-w-sm rounded-lg border p-6">
         <h1 className="mb-1 text-center text-2xl font-bold">PortãoSeguro</h1>
-        <p className="mb-1 text-center text-sm opacity-70">
+        <p className="mb-6 text-center text-sm opacity-70">
           Inicia sessão para continuar
-        </p>
-        {/* Este sistema ainda é um projeto de curso, não uma aplicação
-         * adotada pela direção da escola — a nota deixa isso claro para
-         * quem vir a página, mesmo com o logótipo da escola presente. */}
-        <p className="mb-6 text-center text-xs opacity-50">
-          Projeto UFCD 10790 — Escola Comércio Lisboa
         </p>
 
         <FormularioCredenciais />
