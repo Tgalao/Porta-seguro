@@ -23,12 +23,16 @@ export const config = {
   matcher: [
     /*
      * Aplica-se a todos os pedidos EXCETO:
-     *  - api/auth      -> as próprias rotas do Auth.js (login, callback...)
-     *  - api/saude     -> rota de diagnóstico da Fase 0, usada em desenvolvimento
-     *  - _next/static  -> ficheiros gerados pelo Next.js
-     *  - _next/image   -> otimização de imagens do Next.js
-     *  - favicon.ico
+     *  - api/auth       -> as próprias rotas do Auth.js (login, callback...)
+     *  - api/saude      -> rota de diagnóstico da Fase 0, usada em desenvolvimento
+     *  - _next/static   -> ficheiros gerados pelo Next.js
+     *  - _next/image    -> otimização de imagens do Next.js
+     *  - ficheiros com extensão de imagem/ícone -> tudo o que está em
+     *    public/ (ex.: o logótipo da escola no ecrã de login). Sem esta
+     *    exceção, um pedido a /logo-escola.png sem sessão era redirecionado
+     *    para /login — devolvendo HTML em vez da imagem — precisamente na
+     *    única página onde alguém sem sessão está autorizado a estar.
      */
-    "/((?!api/auth|api/saude|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|api/saude|_next/static|_next/image|.*\\.(?:ico|png|jpg|jpeg|svg|gif|webp)$).*)",
   ],
 };
