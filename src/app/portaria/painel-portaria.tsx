@@ -196,16 +196,14 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
 
       {estado.passo === "resultado" && (
         <Semaforo cor={estado.autorizado ? "verde" : "vermelho"}>
-          <p className="font-semibold">{estado.aluno.nome}</p>
-          {estado.aluno.turma && <p className="text-sm opacity-70">{estado.aluno.turma}</p>}
+          <CartaoAluno aluno={estado.aluno} />
           <p className="text-sm">{estado.motivo}</p>
         </Semaforo>
       )}
 
       {estado.passo === "confirmar-identidade" && (
         <Semaforo cor="amarelo">
-          <p className="font-semibold">{estado.aluno.nome}</p>
-          {estado.aluno.turma && <p className="text-sm opacity-70">{estado.aluno.turma}</p>}
+          <CartaoAluno aluno={estado.aluno} />
           <p className="mt-2 text-sm font-medium">É esta a pessoa à tua frente?</p>
           <div className="mt-1 flex gap-2">
             <button
@@ -230,8 +228,7 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
 
       {estado.passo === "pendente" && (
         <Semaforo cor="amarelo">
-          <p className="font-semibold">{estado.aluno.nome}</p>
-          {estado.aluno.turma && <p className="text-sm opacity-70">{estado.aluno.turma}</p>}
+          <CartaoAluno aluno={estado.aluno} />
           <p className="text-sm">{estado.motivo}</p>
           <p className="mt-2 text-sm font-medium">Os pais autorizam a saída?</p>
           <div className="mt-1 flex gap-2">
@@ -289,6 +286,60 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
       </div>
     </div>
   );
+}
+
+/**
+ * Foto do aluno ao lado do nome.
+ *
+ * É aqui que assenta o RF16: o sistema não tem forma automática de saber se
+ * quem apresenta o telemóvel é o dono do código QR (não há cartão físico nem
+ * segundo fator), por isso quem confirma é o porteiro, comparando a pessoa à
+ * frente com esta fotografia. Sem a foto no ecrã, essa confirmação seria um
+ * palpite — e foi para isto que o campo `fotoUrl` foi acrescentado ao modelo
+ * Utilizador na Fase 1.
+ *
+ * Quando não há foto guardada, mostram-se as iniciais: deixa claro ao
+ * porteiro que não existe fotografia para comparar, em vez de um espaço
+ * vazio que se confunde com uma imagem que não carregou.
+ */
+function CartaoAluno({ aluno }: { aluno: AlunoResumo }) {
+  return (
+    <div className="flex items-center gap-3">
+      {aluno.fotoUrl ? (
+        // `<img>` em vez de `next/image`: o endereço vem da base de dados e
+        // pode apontar para qualquer domínio, e o next/image obriga a
+        // declarar antecipadamente cada domínio permitido no next.config.ts.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={aluno.fotoUrl}
+          alt={`Fotografia de ${aluno.nome}`}
+          className="h-16 w-16 shrink-0 rounded-full border object-cover"
+        />
+      ) : (
+        <div
+          aria-hidden
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-black/10 text-lg font-semibold dark:bg-white/15"
+        >
+          {iniciais(aluno.nome)}
+        </div>
+      )}
+      <div>
+        <p className="font-semibold">{aluno.nome}</p>
+        {aluno.turma && <p className="text-sm opacity-70">{aluno.turma}</p>}
+        {!aluno.fotoUrl && (
+          <p className="text-xs opacity-60">Sem fotografia no sistema</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** "Beatriz Almeida" -> "BA". Nomes de uma só palavra dão uma inicial só. */
+function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  const primeira = partes[0]?.[0] ?? "";
+  const ultima = partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? "") : "";
+  return (primeira + ultima).toUpperCase();
 }
 
 function Semaforo({
