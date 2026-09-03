@@ -17,6 +17,42 @@
 // nenhuma dependência só para isto.
 process.loadEnvFile(".env.local");
 
+/**
+ * TRAVÃO DE SEGURANÇA.
+ *
+ * Este script apaga as 7 coleções antes de recriar os dados. Enquanto só
+ * existiu a base de dados de desenvolvimento isso era inofensivo; a partir
+ * do momento em que houver uma base de dados de produção com alunos a
+ * sério, um `npm run seed` distraído — ou um `.env.local` onde alguém
+ * colou a URI de produção para experimentar uma coisa — apaga tudo, sem
+ * forma de voltar atrás (o plano gratuito do Atlas não faz backups).
+ *
+ * Por isso o comando recusa-se a correr sozinho: é preciso pedir o
+ * apagamento explicitamente. Não protege de quem escreve a flag à mesma,
+ * mas protege do engano, que é o que realmente acontece.
+ */
+const CONFIRMACAO = "--apagar-tudo";
+
+if (!process.argv.includes(CONFIRMACAO)) {
+  // Mostra QUAL base de dados ia ser apagada — é o que permite dar pelo
+  // engano antes de ele acontecer.
+  const uri = process.env.MONGODB_URI ?? "";
+  const nomeBaseDados = uri.split("/").pop()?.split("?")[0] || "(desconhecida)";
+
+  console.error(
+    [
+      "",
+      "  O seed APAGA tudo o que está na base de dados antes de recriar.",
+      `  Base de dados que ia ser apagada: ${nomeBaseDados}`,
+      "",
+      "  Se é mesmo isso que queres, corre:",
+      `      npm run seed -- ${CONFIRMACAO}`,
+      "",
+    ].join("\n"),
+  );
+  process.exit(1);
+}
+
 import mongoose from "mongoose";
 import { Curso, Turma, Horario, Utilizador, Registo, Ocorrencia } from "@/models";
 import type { IUtilizador, ICurso, ITurma } from "@/models";
