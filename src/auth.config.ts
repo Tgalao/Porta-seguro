@@ -33,9 +33,17 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const autenticado = !!auth?.user;
-      const naPaginaDeLogin = request.nextUrl.pathname === "/login";
+      const caminho = request.nextUrl.pathname;
 
-      if (naPaginaDeLogin) {
+      // A página de entrada do site é pública: é o que alguém de fora vê
+      // antes de ter (ou não) conta. Não redireciona quem já tem sessão —
+      // pode querer voltar aqui de propósito, e o botão do cabeçalho passa
+      // a apontar para o painel.
+      if (caminho === "/") {
+        return true;
+      }
+
+      if (caminho === "/login") {
         // Quem já tem sessão iniciada não precisa de voltar a ver o login.
         if (autenticado) {
           return Response.redirect(new URL("/painel", request.nextUrl));
