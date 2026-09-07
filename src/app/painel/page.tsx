@@ -55,7 +55,7 @@ export default async function Painel({
           href="/horarios"
           className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
         >
-          Horários das minhas turmas
+          Horário de turmas
         </Link>
       )}
 
