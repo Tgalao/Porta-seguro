@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { exigirPerfil } from "@/lib/permissoes";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { turmasDoUtilizador } from "@/lib/ambito";
 import { Horario, Utilizador } from "@/models";
-import { LinkVoltarPainel } from "@/components/link-voltar-painel";
-import { HorarioSemanal, type BlocoHorario } from "@/components/horario-semanal";
+import { SeletorTurma, type TurmaComHorario } from "./seletor-turma";
+import type { BlocoHorario } from "@/components/horario-semanal";
 
 /**
  * Horários das turmas, para quem dá ou coordena aulas:
@@ -55,26 +56,54 @@ export default async function PaginaHorarios() {
     blocosPorTurma.set(chave, lista);
   }
 
+  // Junta o horário de cada turma aos dados que o seletor precisa — feito
+  // aqui, no servidor, para o componente de cliente não ter de ir buscar
+  // nada à rede quando se troca de turma.
+  const turmasComHorario: TurmaComHorario[] = turmas.map((turma) => ({
+    id: turma.id,
+    nome: turma.nome,
+    ano: turma.ano,
+    blocos: blocosPorTurma.get(turma.id) ?? [],
+  }));
+
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltarPainel />
-      <h1 className="text-2xl font-bold">Horários</h1>
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
+          <div className="flex items-center gap-3">
+            <div
+              aria-hidden
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-teal-600/50 bg-teal-50 text-[9px] font-semibold uppercase text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
+            >
+              Logo
+            </div>
+            <div className="leading-tight">
+              <h1 className="font-semibold">Horário de turmas</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {turmas.length} {turmas.length === 1 ? "turma" : "turmas"} atribuídas
+              </p>
+            </div>
+          </div>
 
-      {turmas.length === 0 && (
-        <p className="text-sm opacity-70">
-          Ainda não tens turmas atribuídas. Fala com a administração para te
-          associarem blocos de horário ou um curso a coordenar.
-        </p>
-      )}
+          <Link
+            href="/painel"
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          >
+            ← Painel
+          </Link>
+        </div>
+      </header>
 
-      {turmas.map((turma) => (
-        <section key={turma.id} className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">
-            {turma.nome} <span className="text-sm font-normal opacity-60">({turma.ano}.º ano)</span>
-          </h2>
-          <HorarioSemanal blocos={blocosPorTurma.get(turma.id) ?? []} mostrarProfessor />
-        </section>
-      ))}
-    </main>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
+        {turmas.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Ainda não tens turmas atribuídas. Fala com a administração para te
+            associarem blocos de horário ou um curso a coordenar.
+          </p>
+        ) : (
+          <SeletorTurma turmas={turmasComHorario} />
+        )}
+      </main>
+    </div>
   );
 }
