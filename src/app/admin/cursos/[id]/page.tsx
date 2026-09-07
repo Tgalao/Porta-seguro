@@ -4,6 +4,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Curso, Utilizador } from "@/models";
 import { FormularioCurso } from "../formulario-curso";
 import { atualizarCurso } from "../acoes";
+import { LinkVoltar } from "@/components/link-voltar";
 
 export default async function PaginaEditarCurso({
   params,
@@ -23,6 +24,7 @@ export default async function PaginaEditarCurso({
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
+      <LinkVoltar href="/admin/cursos" label="Cursos" />
       <h1 className="text-2xl font-bold">Editar curso</h1>
       <FormularioCurso
         acao={atualizarCurso}

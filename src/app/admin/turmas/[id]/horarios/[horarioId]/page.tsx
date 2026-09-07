@@ -4,6 +4,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Horario, Utilizador } from "@/models";
 import { FormularioHorario } from "../formulario-horario";
 import { atualizarHorario } from "../acoes";
+import { LinkVoltar } from "@/components/link-voltar";
 
 export default async function PaginaEditarHorario({
   params,
@@ -26,6 +27,7 @@ export default async function PaginaEditarHorario({
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
+      <LinkVoltar href={`/admin/turmas/${turmaId}`} label="Editar turma" />
       <h1 className="text-2xl font-bold">Editar bloco de horário</h1>
       <FormularioHorario
         acao={atualizarHorario}

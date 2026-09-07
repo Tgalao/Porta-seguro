@@ -3,6 +3,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador } from "@/models";
 import { FormularioHorario } from "../formulario-horario";
 import { criarHorario } from "../acoes";
+import { LinkVoltar } from "@/components/link-voltar";
 
 export default async function PaginaNovoHorario({
   params,
@@ -20,6 +21,7 @@ export default async function PaginaNovoHorario({
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
+      <LinkVoltar href={`/admin/turmas/${turmaId}`} label="Editar turma" />
       <h1 className="text-2xl font-bold">Novo bloco de horário</h1>
       <FormularioHorario
         acao={criarHorario}

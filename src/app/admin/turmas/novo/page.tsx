@@ -3,6 +3,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Curso, Utilizador } from "@/models";
 import { FormularioTurma } from "../formulario-turma";
 import { criarTurma } from "../acoes";
+import { LinkVoltar } from "@/components/link-voltar";
 
 export default async function PaginaNovaTurma() {
   await exigirPerfil(["admin"]);
@@ -15,6 +16,7 @@ export default async function PaginaNovaTurma() {
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
+      <LinkVoltar href="/admin/turmas" label="Turmas" />
       <h1 className="text-2xl font-bold">Nova turma</h1>
       <FormularioTurma
         acao={criarTurma}

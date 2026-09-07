@@ -5,6 +5,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Curso, Turma, Utilizador } from "@/models";
 import { removerCurso } from "./acoes";
 import { BotaoConfirmar } from "../botao-confirmar";
+import { LinkVoltar } from "@/components/link-voltar";
 
 export default async function PaginaCursos({
   searchParams,
@@ -38,6 +39,7 @@ export default async function PaginaCursos({
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
+      <LinkVoltar href="/admin" label="Administração" />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Cursos</h1>
         <Link

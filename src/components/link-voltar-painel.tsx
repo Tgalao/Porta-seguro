@@ -1,18 +1,12 @@
-import Link from "next/link";
+import { LinkVoltar } from "./link-voltar";
 
 /**
- * Link para voltar ao painel principal — usado no topo de cada ecrã que só
- * um perfil específico vê (portaria, consultas, administração, área
- * pessoal). Sem isto não havia forma de sair dessas páginas a não ser
- * escrever o URL à mão ou usar o botão "recuar" do browser.
+ * Link para voltar ao painel principal — usado no topo de cada ecrã de
+ * primeiro nível que só um perfil específico vê (portaria, consultas,
+ * horários, área pessoal). Para ecrãs mais fundo na hierarquia (ex.: os
+ * formulários dentro da administração), usa `LinkVoltar` diretamente,
+ * apontado ao ecrã-pai lógico em vez de saltar sempre para o painel.
  */
 export function LinkVoltarPainel() {
-  return (
-    <Link
-      href="/painel"
-      className="w-fit text-sm opacity-70 hover:underline hover:opacity-100"
-    >
-      ← Painel
-    </Link>
-  );
+  return <LinkVoltar href="/painel" label="Painel" />;
 }

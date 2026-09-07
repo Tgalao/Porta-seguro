@@ -8,6 +8,7 @@ import { FormularioTurma } from "../formulario-turma";
 import { atualizarTurma } from "../acoes";
 import { removerHorario } from "./horarios/acoes";
 import { BotaoConfirmar } from "../../botao-confirmar";
+import { LinkVoltar } from "@/components/link-voltar";
 
 export default async function PaginaEditarTurma({
   params,
@@ -35,6 +36,7 @@ export default async function PaginaEditarTurma({
 
   return (
     <main className="flex flex-1 flex-col gap-8 p-6">
+      <LinkVoltar href="/admin/turmas" label="Turmas" />
       <div>
         <h1 className="mb-4 text-2xl font-bold">Editar turma</h1>
         <FormularioTurma
