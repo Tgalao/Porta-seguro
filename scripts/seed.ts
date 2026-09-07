@@ -196,11 +196,33 @@ async function main() {
     { nome: "2MEC", ano: 2, curso: cursoMEC, disciplinas: DISCIPLINAS_MEC },
   ];
 
-  const BLOCOS_DIARIOS: Array<[string, string]> = [
+  // Um dia "normal" tem só a manhã + o bloco logo a seguir ao almoço
+  // (11:45–13:00 já é um intervalo de almoço real). À terça e à quinta o
+  // dia estende-se até às 16h/18h — dá dois cenários diferentes para testar
+  // saída/entrada à hora de almoço num dia mais comprido, tal como um dia
+  // real de aulas com mais horas.
+  const BLOCO_MANHA: Array<[string, string]> = [
     ["08:30", "10:00"],
     ["10:15", "11:45"],
-    ["13:00", "14:30"],
   ];
+  const BLOCO_TARDE_CURTA: Array<[string, string]> = [["13:00", "14:30"]];
+  const BLOCO_TARDE_ATE_16H: Array<[string, string]> = [
+    ["13:00", "14:30"],
+    ["14:45", "16:15"],
+  ];
+  const BLOCO_TARDE_ATE_18H: Array<[string, string]> = [
+    ["13:00", "14:30"],
+    ["14:45", "16:15"],
+    ["16:30", "18:00"],
+  ];
+
+  const BLOCOS_POR_DIA: Record<number, Array<[string, string]>> = {
+    1: [...BLOCO_MANHA, ...BLOCO_TARDE_CURTA], // segunda — dia normal
+    2: [...BLOCO_MANHA, ...BLOCO_TARDE_ATE_16H], // terça — sai às 16h
+    3: [...BLOCO_MANHA, ...BLOCO_TARDE_CURTA], // quarta — dia normal
+    4: [...BLOCO_MANHA, ...BLOCO_TARDE_ATE_18H], // quinta — sai às 18h
+    5: [...BLOCO_MANHA, ...BLOCO_TARDE_CURTA], // sexta — dia normal
+  };
 
   const turmasCriadas: ITurma[] = [];
   const alunosPorTurma: AlunoResumoSeed[][] = [];
@@ -229,7 +251,7 @@ async function main() {
 
     const horariosDaTurma = [];
     for (let diaSemana = 1; diaSemana <= 5; diaSemana++) {
-      for (const [indice, [horaInicio, horaFim]] of BLOCOS_DIARIOS.entries()) {
+      for (const [indice, [horaInicio, horaFim]] of BLOCOS_POR_DIA[diaSemana].entries()) {
         const professor = professores[contadorProfessor % professores.length];
         contadorProfessor++;
         horariosDaTurma.push({
@@ -353,7 +375,13 @@ async function main() {
 
   console.log("\nSemeado com sucesso:");
   console.log(`  Cursos: 2, Turmas: ${turmasCriadas.length}, Alunos: ${todosAlunos.length}`);
-  console.log(`  Professores: ${professores.length}, Horários: ${turmasCriadas.length * 15}`);
+  const blocosPorTurma = Object.values(BLOCOS_POR_DIA).reduce(
+    (total, blocosDoDia) => total + blocosDoDia.length,
+    0,
+  );
+  console.log(
+    `  Professores: ${professores.length}, Horários: ${turmasCriadas.length * blocosPorTurma}`,
+  );
   console.log(`  Registos: ${registosExemplo.length + 1}, Ocorrências: 1`);
   console.log("\nContas para experimentar (todas com a mesma palavra-passe):");
   console.log(`  Palavra-passe: ${PALAVRA_PASSE_SEED}`);
