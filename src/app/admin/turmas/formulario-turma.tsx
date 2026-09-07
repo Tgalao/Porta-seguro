@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { CampoPasskey } from "../campo-passkey";
 
 type AcaoTurma = (
   estadoAnterior: string | undefined,
@@ -88,6 +89,8 @@ export function FormularioTurma({
           ))}
         </select>
       </label>
+
+      {turmaInicial && <CampoPasskey />}
 
       {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 

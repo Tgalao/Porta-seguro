@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { CampoPasskey } from "../campo-passkey";
 
 type AcaoAluno = (
   estadoAnterior: string | undefined,
@@ -117,6 +118,8 @@ export function FormularioAluno({
         <input type="checkbox" name="suspenso" defaultChecked={alunoInicial?.suspenso} />
         Suspenso (bloqueia a entrada)
       </label>
+
+      {alunoInicial && <CampoPasskey />}
 
       {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 

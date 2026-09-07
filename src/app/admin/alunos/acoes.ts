@@ -6,6 +6,7 @@ import { exigirPerfil } from "@/lib/permissoes";
 import { hashPassword } from "@/lib/senha";
 import { Utilizador, Registo, Ocorrencia, TokenQR } from "@/models";
 import { mensagemDeErroMongoose } from "../erros";
+import { passkeyValida, ERRO_PASSKEY } from "../passkey";
 
 function lerCampos(formData: FormData) {
   return {
@@ -54,6 +55,10 @@ export async function atualizarAluno(
   await exigirPerfil(["admin"]);
   await ligarBaseDados();
 
+  if (!passkeyValida(formData)) {
+    return ERRO_PASSKEY;
+  }
+
   const id = String(formData.get("id") ?? "");
   const dados = lerCampos(formData);
   if (!dados.nomeCompleto || !dados.email) {
@@ -89,6 +94,10 @@ export async function removerAluno(formData: FormData): Promise<void> {
   await ligarBaseDados();
 
   const id = String(formData.get("id") ?? "");
+
+  if (!passkeyValida(formData)) {
+    redirect(`/admin/alunos?erro=${encodeURIComponent(ERRO_PASSKEY)}`);
+  }
 
   await Promise.all([
     Registo.deleteMany({ alunoId: id }),

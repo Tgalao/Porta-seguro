@@ -6,9 +6,14 @@ import { Utilizador, Turma } from "@/models";
 import { removerAluno } from "./acoes";
 import { BotaoConfirmar } from "../botao-confirmar";
 
-export default async function PaginaAlunos() {
+export default async function PaginaAlunos({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string }>;
+}) {
   await exigirPerfil(["admin"]);
   await ligarBaseDados();
+  const { erro } = await searchParams;
 
   const alunos = await Utilizador.find({ perfil: "aluno" }).sort({ nomeCompleto: 1 }).lean();
   const idsTurmas = alunos
@@ -30,6 +35,12 @@ export default async function PaginaAlunos() {
           + Novo aluno
         </Link>
       </div>
+
+      {erro && (
+        <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+          {erro}
+        </p>
+      )}
 
       <table className="w-full text-left text-sm">
         <thead>

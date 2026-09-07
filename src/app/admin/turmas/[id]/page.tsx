@@ -11,12 +11,15 @@ import { BotaoConfirmar } from "../../botao-confirmar";
 
 export default async function PaginaEditarTurma({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string }>;
 }) {
   await exigirPerfil(["admin"]);
   await ligarBaseDados();
   const { id } = await params;
+  const { erro } = await searchParams;
 
   const [turma, cursos, diretores, professores, horarios] = await Promise.all([
     Turma.findById(id).lean(),
@@ -49,6 +52,11 @@ export default async function PaginaEditarTurma({
       </div>
 
       <div>
+        {erro && (
+          <p className="mb-3 rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {erro}
+          </p>
+        )}
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Horário semanal (RF10)</h2>
           <Link

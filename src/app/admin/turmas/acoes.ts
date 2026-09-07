@@ -5,6 +5,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
 import { Turma, Horario, Utilizador } from "@/models";
 import { mensagemDeErroMongoose } from "../erros";
+import { passkeyValida, ERRO_PASSKEY } from "../passkey";
 
 function lerCampos(formData: FormData) {
   return {
@@ -43,6 +44,10 @@ export async function atualizarTurma(
   await exigirPerfil(["admin"]);
   await ligarBaseDados();
 
+  if (!passkeyValida(formData)) {
+    return ERRO_PASSKEY;
+  }
+
   const id = String(formData.get("id") ?? "");
   const dados = lerCampos(formData);
   if (!dados.nome || !dados.ano || !dados.cursoId) {
@@ -68,6 +73,10 @@ export async function removerTurma(formData: FormData): Promise<void> {
   await ligarBaseDados();
 
   const id = String(formData.get("id") ?? "");
+
+  if (!passkeyValida(formData)) {
+    redirect(`/admin/turmas?erro=${encodeURIComponent(ERRO_PASSKEY)}`);
+  }
 
   await Horario.deleteMany({ turmaId: id });
   await Utilizador.updateMany({ turmaId: id }, { $unset: { turmaId: "" } });

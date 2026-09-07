@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
 import { Horario } from "@/models";
+import { passkeyValida, ERRO_PASSKEY } from "../../../passkey";
 
 function lerCampos(formData: FormData) {
   return {
@@ -45,6 +46,10 @@ export async function atualizarHorario(
   await exigirPerfil(["admin"]);
   await ligarBaseDados();
 
+  if (!passkeyValida(formData)) {
+    return ERRO_PASSKEY;
+  }
+
   const id = String(formData.get("id") ?? "");
   const dados = lerCampos(formData);
   if (!dados.disciplina || !dados.horaInicio || !dados.horaFim) {
@@ -66,6 +71,10 @@ export async function removerHorario(formData: FormData): Promise<void> {
 
   const id = String(formData.get("id") ?? "");
   const turmaId = String(formData.get("turmaId") ?? "");
+
+  if (!passkeyValida(formData)) {
+    redirect(`/admin/turmas/${turmaId}?erro=${encodeURIComponent(ERRO_PASSKEY)}`);
+  }
 
   await Horario.findByIdAndDelete(id);
   redirect(`/admin/turmas/${turmaId}`);

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { NOMES_DIAS_SEMANA } from "@/lib/datas";
+import { CampoPasskey } from "../../../campo-passkey";
 
 type AcaoHorario = (
   estadoAnterior: string | undefined,
@@ -108,6 +109,8 @@ export function FormularioHorario({
           className="rounded border px-3 py-2 dark:bg-transparent"
         />
       </label>
+
+      {horarioInicial && <CampoPasskey />}
 
       {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 

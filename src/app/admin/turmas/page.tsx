@@ -5,9 +5,14 @@ import { Turma, Curso, Utilizador } from "@/models";
 import { removerTurma } from "./acoes";
 import { BotaoConfirmar } from "../botao-confirmar";
 
-export default async function PaginaTurmas() {
+export default async function PaginaTurmas({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string }>;
+}) {
   await exigirPerfil(["admin"]);
   await ligarBaseDados();
+  const { erro } = await searchParams;
 
   const turmas = await Turma.find().sort({ nome: 1 }).lean();
   const cursos = await Curso.find({ _id: { $in: turmas.map((t) => t.cursoId) } })
@@ -34,6 +39,12 @@ export default async function PaginaTurmas() {
           + Nova turma
         </Link>
       </div>
+
+      {erro && (
+        <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+          {erro}
+        </p>
+      )}
 
       <table className="w-full text-left text-sm">
         <thead>
