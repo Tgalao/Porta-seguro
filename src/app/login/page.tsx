@@ -3,7 +3,29 @@ import { redirect } from "next/navigation";
 import { FormularioCredenciais } from "./formulario-credenciais";
 import { entrarComGoogle } from "./acoes";
 
-export default async function PaginaLogin() {
+/**
+ * Mensagens para os códigos de erro que o Auth.js acrescenta ao URL
+ * (`/login?error=...`) quando o login falha antes de haver sessão — o
+ * caso mais comum é o `signIn` callback (src/auth.ts) recusar uma conta
+ * Google sem `Utilizador` correspondente na escola.
+ *
+ * Sem isto, uma tentativa falhada com o Google não mostrava nada: a
+ * pessoa ficava a olhar para o formulário vazio, sem perceber que a
+ * entrada tinha sido recusada — e se por acaso já tivesse uma sessão
+ * antiga válida noutra aba, parecia que "o Google a tinha deixado entrar"
+ * quando na verdade só continuava a ver essa sessão antiga.
+ */
+const MENSAGENS_ERRO_LOGIN: Record<string, string> = {
+  AccessDenied:
+    "Esta conta Google não tem acesso ao PortãoSeguro. Só entra quem já tiver uma conta criada na escola — fala com a administração.",
+  Configuration: "Erro de configuração do login. Tenta novamente mais tarde.",
+};
+
+export default async function PaginaLogin({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   // Quem já tem sessão iniciada não precisa de ver o login outra vez.
   // (O middleware já faz este mesmo redirecionamento antes de chegar aqui;
   // repetimos por segurança, caso esta página seja alguma vez usada de
@@ -13,6 +35,11 @@ export default async function PaginaLogin() {
     redirect("/painel");
   }
 
+  const { error } = await searchParams;
+  const mensagemErro = error
+    ? (MENSAGENS_ERRO_LOGIN[error] ?? "Não foi possível iniciar sessão. Tenta novamente.")
+    : null;
+
   return (
     <main className="flex flex-1 flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm rounded-lg border p-6">
@@ -20,6 +47,12 @@ export default async function PaginaLogin() {
         <p className="mb-6 text-center text-sm opacity-70">
           Inicia sessão para continuar
         </p>
+
+        {mensagemErro && (
+          <p className="mb-4 rounded bg-red-100 px-3 py-2 text-center text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {mensagemErro}
+          </p>
+        )}
 
         <FormularioCredenciais />
 
