@@ -15,6 +15,9 @@ const ROTULOS_SITUACAO: Record<string, string> = {
   falta: "Falta",
 };
 
+const CLASSE_CAMPO =
+  "rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent";
+
 export function FiltroConsulta({
   alunos,
   turmas,
@@ -58,13 +61,16 @@ export function FiltroConsulta({
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={consultar} className="flex flex-wrap items-end gap-3">
+      <form
+        onSubmit={consultar}
+        className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      >
         <label className="flex flex-col gap-1 text-sm">
           Âmbito
           <select
             value={ambito}
             onChange={(e) => mudarAmbito(e.target.value as Ambito)}
-            className="rounded border px-3 py-2"
+            className={CLASSE_CAMPO}
           >
             <option value="aluno">Por aluno</option>
             <option value="turma">Por turma</option>
@@ -77,7 +83,7 @@ export function FiltroConsulta({
           <select
             value={alvo}
             onChange={(e) => setAlvo(e.target.value)}
-            className="min-w-48 rounded border px-3 py-2"
+            className={`min-w-48 ${CLASSE_CAMPO}`}
           >
             {opcoesAtuais.map((opcao) => (
               <option key={opcao.valor} value={opcao.valor}>
@@ -93,22 +99,22 @@ export function FiltroConsulta({
             type="month"
             value={mes}
             onChange={(e) => setMes(e.target.value)}
-            className="rounded border px-3 py-2"
+            className={CLASSE_CAMPO}
           />
         </label>
 
         <button
           type="submit"
           disabled={aEnviar || !alvo}
-          className="rounded border px-4 py-2 text-sm hover:bg-black/5 disabled:opacity-50 dark:hover:bg-white/10"
+          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50"
         >
-          Consultar
+          {aEnviar ? "A consultar..." : "Consultar"}
         </button>
 
         {podeExportar && resultado?.ok && (
           <a
             href={`/api/relatorios/pdf?ambito=${ambito}&alvo=${alvo}&mes=${mes}`}
-            className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             Exportar PDF
           </a>
@@ -116,93 +122,117 @@ export function FiltroConsulta({
       </form>
 
       {resultado && !resultado.ok && (
-        <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p className="rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
           {resultado.erro}
         </p>
       )}
 
       {resultado?.ok && (
-        <>
-          <h2 className="text-lg font-semibold">{resultado.alvoNome}</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-4 font-semibold">{resultado.alvoNome}</h2>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mb-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Tile rotulo="Dias letivos" valor={resultado.resumo.diasLetivos} />
-            <Tile rotulo="Presenças" valor={resultado.resumo.presencas} />
-            <Tile rotulo="Atrasos" valor={resultado.resumo.atrasos} />
-            <Tile rotulo="Faltas" valor={resultado.resumo.faltas} />
+            <Tile rotulo="Presenças" valor={resultado.resumo.presencas} destaque="ok" />
+            <Tile rotulo="Atrasos" valor={resultado.resumo.atrasos} destaque="aviso" />
+            <Tile rotulo="Faltas" valor={resultado.resumo.faltas} destaque="critico" />
           </div>
-          <p className="text-sm opacity-70">
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
             Taxa de presença: {(resultado.resumo.taxaPresenca * 100).toFixed(1)}%
           </p>
 
-          {resultado.ambito === "aluno" ? (
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-1 pr-4">Dia</th>
-                  <th className="py-1 pr-4">Situação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultado.dias.map((dia, indice) => (
-                  <tr key={indice} className="border-b last:border-0">
-                    <td className="py-1 pr-4">{dia.dataFormatada}</td>
-                    <td className="py-1 pr-4">{ROTULOS_SITUACAO[dia.situacao]}</td>
+          <div className="overflow-x-auto">
+            {resultado.ambito === "aluno" ? (
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                    <th className="py-2 pr-4 font-medium">Dia</th>
+                    <th className="py-2 pr-4 font-medium">Situação</th>
                   </tr>
-                ))}
-                {resultado.dias.length === 0 && (
-                  <tr>
-                    <td colSpan={2} className="py-3 text-center opacity-60">
-                      Sem dias letivos neste mês.
-                    </td>
+                </thead>
+                <tbody>
+                  {resultado.dias.map((dia, indice) => (
+                    <tr
+                      key={indice}
+                      className="border-b border-slate-100 last:border-0 dark:border-slate-800"
+                    >
+                      <td className="py-2 pr-4 font-mono tabular-nums">{dia.dataFormatada}</td>
+                      <td className="py-2 pr-4">{ROTULOS_SITUACAO[dia.situacao]}</td>
+                    </tr>
+                  ))}
+                  {resultado.dias.length === 0 && (
+                    <tr>
+                      <td colSpan={2} className="py-6 text-center text-slate-500 dark:text-slate-400">
+                        Sem dias letivos neste mês.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                    <th className="py-2 pr-4 font-medium">Aluno</th>
+                    <th className="py-2 pr-4 font-medium">Turma</th>
+                    <th className="py-2 pr-4 font-medium">Presenças</th>
+                    <th className="py-2 pr-4 font-medium">Atrasos</th>
+                    <th className="py-2 pr-4 font-medium">Faltas</th>
+                    <th className="py-2 pr-4 font-medium">Taxa</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          ) : (
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-1 pr-4">Aluno</th>
-                  <th className="py-1 pr-4">Turma</th>
-                  <th className="py-1 pr-4">Presenças</th>
-                  <th className="py-1 pr-4">Atrasos</th>
-                  <th className="py-1 pr-4">Faltas</th>
-                  <th className="py-1 pr-4">Taxa</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultado.alunos.map((linha) => (
-                  <tr key={linha.alunoId} className="border-b last:border-0">
-                    <td className="py-1 pr-4">{linha.nome}</td>
-                    <td className="py-1 pr-4">{linha.turma ?? "—"}</td>
-                    <td className="py-1 pr-4">{linha.resumo.presencas}</td>
-                    <td className="py-1 pr-4">{linha.resumo.atrasos}</td>
-                    <td className="py-1 pr-4">{linha.resumo.faltas}</td>
-                    <td className="py-1 pr-4">{(linha.resumo.taxaPresenca * 100).toFixed(0)}%</td>
-                  </tr>
-                ))}
-                {resultado.alunos.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-3 text-center opacity-60">
-                      Sem alunos neste âmbito.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-        </>
+                </thead>
+                <tbody>
+                  {resultado.alunos.map((linha) => (
+                    <tr
+                      key={linha.alunoId}
+                      className="border-b border-slate-100 last:border-0 dark:border-slate-800"
+                    >
+                      <td className="py-2 pr-4 font-medium">{linha.nome}</td>
+                      <td className="py-2 pr-4">{linha.turma ?? "—"}</td>
+                      <td className="py-2 pr-4 tabular-nums">{linha.resumo.presencas}</td>
+                      <td className="py-2 pr-4 tabular-nums">{linha.resumo.atrasos}</td>
+                      <td className="py-2 pr-4 tabular-nums">{linha.resumo.faltas}</td>
+                      <td className="py-2 pr-4 tabular-nums">
+                        {(linha.resumo.taxaPresenca * 100).toFixed(0)}%
+                      </td>
+                    </tr>
+                  ))}
+                  {resultado.alunos.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-500 dark:text-slate-400">
+                        Sem alunos neste âmbito.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );
 }
 
-function Tile({ rotulo, valor }: { rotulo: string; valor: number }) {
+function Tile({
+  rotulo,
+  valor,
+  destaque,
+}: {
+  rotulo: string;
+  valor: number;
+  destaque?: "ok" | "aviso" | "critico";
+}) {
+  const cores = {
+    ok: "text-emerald-700 dark:text-emerald-400",
+    aviso: "text-amber-700 dark:text-amber-400",
+    critico: "text-red-700 dark:text-red-400",
+  };
+
   return (
-    <div className="rounded border p-3">
-      <p className="text-2xl font-bold">{valor}</p>
-      <p className="text-sm opacity-70">{rotulo}</p>
+    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-800/40">
+      <p className={`text-2xl font-bold tabular-nums ${destaque ? cores[destaque] : ""}`}>{valor}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{rotulo}</p>
     </div>
   );
 }

@@ -46,9 +46,9 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
             alt="Código QR para a portaria"
             width={240}
             height={240}
-            className="rounded border"
+            className="rounded-xl border border-slate-200 p-2 dark:border-slate-700"
           />
-          <p className="text-sm opacity-70">
+          <p className="rounded-full bg-teal-50 px-3 py-1 font-mono text-sm tabular-nums text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
             Válido por mais {Math.floor(segundos / 60)}:{String(segundos % 60).padStart(2, "0")}
           </p>
         </>
@@ -62,9 +62,9 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
         type="button"
         onClick={gerar}
         disabled={aGerar}
-        className="rounded border px-4 py-2 text-sm hover:bg-black/5 disabled:opacity-50 dark:hover:bg-white/10"
+        className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50"
       >
-        {token ? "Gerar novo código" : "Gerar código QR"}
+        {aGerar ? "A gerar..." : token ? "Gerar novo código" : "Gerar código QR"}
       </button>
     </div>
   );

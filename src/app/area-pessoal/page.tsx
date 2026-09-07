@@ -13,7 +13,7 @@ import {
   type RegistoParaAssiduidade,
 } from "@/lib/relatorios/calcularAssiduidade";
 import { GeradorQR } from "./gerador-qr";
-import { LinkVoltarPainel } from "@/components/link-voltar-painel";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 import { HorarioSemanal, type BlocoHorario } from "@/components/horario-semanal";
 import type { TokenGerado } from "./acoes";
 
@@ -81,89 +81,112 @@ export default async function PaginaAreaPessoal() {
   const faltasEAtrasos = assiduidade.dias.filter((dia) => dia.situacao !== "presenca");
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 p-6">
-      <LinkVoltarPainel />
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao
+        titulo="A minha área"
+        subtitulo={turma?.nome}
+        voltarHref="/painel"
+        voltarLabel="Painel"
+      />
 
-      <section className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold">O meu código QR</h1>
-        <p className="max-w-sm text-center text-sm opacity-70">
-          Mostra este código na portaria para entrar ou sair. É válido durante 2
-          minutos e só pode ser usado uma vez.
-        </p>
-        <GeradorQR tokenInicial={tokenInicial} />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-bold">
-          O meu horário{turma && <span className="ml-2 text-sm font-normal opacity-60">{turma.nome}</span>}
-        </h2>
-        {aluno?.turmaId ? (
-          <HorarioSemanal blocos={blocos} diaEmDestaque={diaDaSemanaEmLisboa(agora)} />
-        ) : (
-          <p className="text-sm opacity-70">Ainda não tens turma atribuída.</p>
-        )}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-bold">
-          A minha assiduidade
-          <span className="ml-2 text-sm font-normal opacity-60">
-            {String(mes).padStart(2, "0")}/{ano}
-          </span>
-        </h2>
-
-        {assiduidade.diasLetivos === 0 ? (
-          <p className="text-sm opacity-70">
-            Ainda não há dias letivos registados neste mês.
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-8">
+        <section className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="font-semibold">O meu código QR</h2>
+          <p className="max-w-sm text-center text-sm text-slate-500 dark:text-slate-400">
+            Mostra este código na portaria para entrar ou sair. É válido durante
+            2 minutos e só pode ser usado uma vez.
           </p>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Numero titulo="Dias letivos" valor={assiduidade.diasLetivos} />
-              <Numero titulo="Presenças" valor={assiduidade.presencas} />
-              <Numero titulo="Atrasos" valor={assiduidade.atrasos} />
-              <Numero titulo="Faltas" valor={assiduidade.faltas} />
-            </div>
+          <GeradorQR tokenInicial={tokenInicial} />
+        </section>
 
-            <p className="text-sm opacity-70">
-              Taxa de presença: {(assiduidade.taxaPresenca * 100).toFixed(0)}%
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-4 font-semibold">O meu horário</h2>
+          {aluno?.turmaId ? (
+            <HorarioSemanal blocos={blocos} diaEmDestaque={diaDaSemanaEmLisboa(agora)} />
+          ) : (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Ainda não tens turma atribuída.
             </p>
+          )}
+        </section>
 
-            {faltasEAtrasos.length > 0 && (
-              <div>
-                <h3 className="mb-1 text-sm font-semibold">Dias a assinalar</h3>
-                <ul className="flex flex-col gap-0.5 text-sm">
-                  {faltasEAtrasos.map((dia) => (
-                    <li key={dia.data.toISOString()} className="flex gap-3">
-                      <span className="font-mono tabular-nums opacity-70">
-                        {formatarData(dia.data)}
-                      </span>
-                      <span
-                        className={
-                          dia.situacao === "falta"
-                            ? "text-red-600 dark:text-red-400"
-                            : "text-yellow-700 dark:text-yellow-500"
-                        }
-                      >
-                        {dia.situacao === "falta" ? "Falta" : "Presença com atraso"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-4 flex items-center gap-2 font-semibold">
+            A minha assiduidade
+            <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
+              {String(mes).padStart(2, "0")}/{ano}
+            </span>
+          </h2>
+
+          {assiduidade.diasLetivos === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Ainda não há dias letivos registados neste mês.
+            </p>
+          ) : (
+            <>
+              <div className="mb-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Numero titulo="Dias letivos" valor={assiduidade.diasLetivos} />
+                <Numero titulo="Presenças" valor={assiduidade.presencas} destaque="ok" />
+                <Numero titulo="Atrasos" valor={assiduidade.atrasos} destaque="aviso" />
+                <Numero titulo="Faltas" valor={assiduidade.faltas} destaque="critico" />
               </div>
-            )}
-          </>
-        )}
-      </section>
-    </main>
+
+              <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                Taxa de presença: {(assiduidade.taxaPresenca * 100).toFixed(0)}%
+              </p>
+
+              {faltasEAtrasos.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Dias a assinalar
+                  </h3>
+                  <ul className="flex flex-col gap-1 text-sm">
+                    {faltasEAtrasos.map((dia) => (
+                      <li key={dia.data.toISOString()} className="flex items-center gap-3">
+                        <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                          {formatarData(dia.data)}
+                        </span>
+                        <span
+                          className={
+                            dia.situacao === "falta"
+                              ? "rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
+                              : "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                          }
+                        >
+                          {dia.situacao === "falta" ? "Falta" : "Presença com atraso"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
 
-function Numero({ titulo, valor }: { titulo: string; valor: number }) {
+function Numero({
+  titulo,
+  valor,
+  destaque,
+}: {
+  titulo: string;
+  valor: number;
+  destaque?: "ok" | "aviso" | "critico";
+}) {
+  const cores = {
+    ok: "text-emerald-700 dark:text-emerald-400",
+    aviso: "text-amber-700 dark:text-amber-400",
+    critico: "text-red-700 dark:text-red-400",
+  };
+
   return (
-    <div className="rounded border p-3">
-      <p className="text-2xl font-bold tabular-nums">{valor}</p>
-      <p className="text-xs opacity-70">{titulo}</p>
+    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-800/40">
+      <p className={`text-2xl font-bold tabular-nums ${destaque ? cores[destaque] : ""}`}>{valor}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{titulo}</p>
     </div>
   );
 }

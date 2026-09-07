@@ -4,7 +4,7 @@ import { partesEmLisboa } from "@/lib/datas";
 import { Utilizador } from "@/models";
 import { turmasDoUtilizador } from "@/lib/ambito";
 import { FiltroConsulta } from "./filtro-consulta";
-import { LinkVoltarPainel } from "@/components/link-voltar-painel";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 /**
  * Ecrã de consultas e listagem (UC02/UC04): assiduidade por aluno, por
@@ -33,23 +33,24 @@ export default async function PaginaConsultas() {
   const mesAtual = `${ano}-${String(mes).padStart(2, "0")}`;
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltarPainel />
-      <h1 className="text-2xl font-bold">Consultas de assiduidade</h1>
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao titulo="Consultas de assiduidade" voltarHref="/painel" voltarLabel="Painel" />
 
-      {turmas.length === 0 ? (
-        <p className="text-sm opacity-70">
-          Ainda não tens turmas atribuídas para consultar.
-        </p>
-      ) : (
-        <FiltroConsulta
-          alunos={alunos.map((a) => ({ id: a._id.toString(), nome: a.nomeCompleto }))}
-          turmas={turmas.map((t) => ({ id: t.id, nome: t.nome }))}
-          anos={anos}
-          mesInicial={mesAtual}
-          podeExportar
-        />
-      )}
-    </main>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
+        {turmas.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Ainda não tens turmas atribuídas para consultar.
+          </p>
+        ) : (
+          <FiltroConsulta
+            alunos={alunos.map((a) => ({ id: a._id.toString(), nome: a.nomeCompleto }))}
+            turmas={turmas.map((t) => ({ id: t.id, nome: t.nome }))}
+            anos={anos}
+            mesInicial={mesAtual}
+            podeExportar
+          />
+        )}
+      </main>
+    </div>
   );
 }
