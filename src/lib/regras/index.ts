@@ -15,3 +15,8 @@ export {
   type ResultadoValidacaoQR,
 } from "./validarTokenQR";
 export { encontrarBlocoADecorrer } from "./horarios";
+export {
+  calcularEstadoPorta,
+  type EstadoPorta,
+  type ResultadoEstadoPorta,
+} from "./estadoPorta";
