@@ -9,7 +9,7 @@
 
 import type { Types } from "mongoose";
 import { ligarBaseDados } from "@/lib/mongoose";
-import { Turma, Horario, Utilizador } from "@/models";
+import { Turma, Horario, Curso } from "@/models";
 import type { Perfil } from "@/lib/constantes";
 
 export interface TurmaDoAmbito {
@@ -27,6 +27,14 @@ export interface TurmaDoAmbito {
  *                    as turmas de que é diretor;
  *  - qualquer outro perfil (aluno, porteiro) -> nenhuma. O aluno vê o seu
  *    próprio horário pela área pessoal, e o porteiro não consulta turmas.
+ *
+ * IMPORTANTE: a relação "é coordenador deste curso" / "é diretor desta
+ * turma" está guardada em `Curso.coordenadorId` e `Turma.diretorTurmaId` —
+ * são esses os campos que o admin edita. O `Utilizador` tem campos-espelho
+ * (`cursosQueCoordena`, `turmasQueCoordena`) que o `seed.ts` preenche, mas
+ * NENHUMA ação do admin os atualiza; usá-los aqui deixava invisível
+ * qualquer coordenador ou DT atribuído depois do seed. Por isso consulta-se
+ * sempre a fonte (`Curso`/`Turma`), nunca o espelho.
  */
 export async function turmasDoUtilizador(
   idUtilizador: string,
@@ -40,11 +48,10 @@ export async function turmasDoUtilizador(
   }
 
   if (perfil === "coordenador") {
-    const utilizador = await Utilizador.findById(idUtilizador).select("cursosQueCoordena").lean();
-    const cursos = utilizador?.cursosQueCoordena ?? [];
+    const cursos = await Curso.find({ coordenadorId: idUtilizador }).select("_id").lean();
     if (cursos.length === 0) return [];
 
-    const turmas = await Turma.find({ cursoId: { $in: cursos } })
+    const turmas = await Turma.find({ cursoId: { $in: cursos.map((c) => c._id) } })
       .select("nome ano")
       .sort({ nome: 1 })
       .lean();
@@ -52,16 +59,16 @@ export async function turmasDoUtilizador(
   }
 
   if (perfil === "professor" || perfil === "dt") {
-    const [blocos, utilizador] = await Promise.all([
+    const [blocos, turmasDirigidas] = await Promise.all([
       Horario.find({ professorId: idUtilizador }).select("turmaId").lean(),
-      Utilizador.findById(idUtilizador).select("turmasQueCoordena").lean(),
+      Turma.find({ diretorTurmaId: idUtilizador }).select("_id").lean(),
     ]);
 
     // Um Set evita repetidos: um professor tem normalmente vários blocos na
     // mesma turma, e um diretor de turma também lá dá aulas.
     const ids = new Set<string>(blocos.map((bloco) => bloco.turmaId.toString()));
-    for (const turmaId of utilizador?.turmasQueCoordena ?? []) {
-      ids.add(turmaId.toString());
+    for (const turma of turmasDirigidas) {
+      ids.add(turma._id.toString());
     }
     if (ids.size === 0) return [];
 
