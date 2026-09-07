@@ -6,17 +6,20 @@
  * descarregar — um `<a href="/api/relatorios/pdf?...">` é a forma direta
  * de o browser fazer o download, sem código extra nenhum no cliente.
  *
- * Só a administração gera relatórios (UC04: "Atores: Administração").
+ * Só quem consulta assiduidade gera relatórios: admin e coordenador (UC04).
+ * O ficheiro é gerado a partir dos mesmos dados que a pessoa já vê no ecrã
+ * de consultas, e passa pela mesma verificação de âmbito — senão bastava
+ * trocar o `alvo` no endereço para descarregar dados de outra turma.
  */
 import { exigirPerfil } from "@/lib/permissoes";
-import { calcularResultadoConsulta, type Ambito } from "@/app/consultas/logica";
+import { calcularResultadoConsulta, podeConsultar, type Ambito } from "@/app/consultas/logica";
 import { gerarPDFRelatorio } from "./gerarPDF";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  await exigirPerfil(["admin"]);
+  const sessao = await exigirPerfil(["coordenador", "admin"]);
 
   const { searchParams } = new URL(request.url);
   const ambito = searchParams.get("ambito") as Ambito | null;
@@ -25,6 +28,10 @@ export async function GET(request: Request) {
 
   if (!ambito || !alvo || !mes || !/^\d{4}-\d{2}$/.test(mes)) {
     return new Response("Parâmetros em falta ou inválidos.", { status: 400 });
+  }
+
+  if (!(await podeConsultar(sessao.user.id, sessao.user.perfil, ambito, alvo))) {
+    return new Response("Não tens acesso a esses dados.", { status: 403 });
   }
 
   const resultado = await calcularResultadoConsulta(ambito, alvo, mes);

@@ -7,7 +7,9 @@
 
 import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador, Turma, Registo, Horario } from "@/models";
+import { turmasDoUtilizador } from "@/lib/ambito";
 import { limitesDoMesEmLisboa, formatarData } from "@/lib/datas";
+import type { Perfil } from "@/lib/constantes";
 import {
   calcularAssiduidade,
   type RegistoParaAssiduidade,
@@ -15,6 +17,42 @@ import {
 } from "@/lib/relatorios/calcularAssiduidade";
 
 export type Ambito = "aluno" | "turma" | "ano";
+
+/**
+ * Confirma que o alvo pedido está dentro do âmbito de quem pergunta.
+ *
+ * Vive aqui (e não em `acoes.ts`) porque um ficheiro "use server" transforma
+ * cada função exportada numa Server Action chamável a partir do browser — e
+ * uma verificação de permissões não tem nada que estar exposta assim.
+ */
+export async function podeConsultar(
+  idUtilizador: string,
+  perfil: Perfil,
+  ambito: Ambito,
+  alvo: string,
+): Promise<boolean> {
+  if (perfil === "admin") return true;
+
+  const turmas = await turmasDoUtilizador(idUtilizador, perfil);
+
+  if (ambito === "turma") {
+    return turmas.some((turma) => turma.id === alvo);
+  }
+
+  if (ambito === "ano") {
+    return turmas.some((turma) => String(turma.ano) === alvo);
+  }
+
+  // Âmbito "aluno": só se o aluno estiver numa das turmas do coordenador.
+  await ligarBaseDados();
+  const aluno = await Utilizador.findOne({ _id: alvo, perfil: "aluno" })
+    .select("turmaId")
+    .lean();
+  if (!aluno?.turmaId) return false;
+
+  const idTurmaDoAluno = aluno.turmaId.toString();
+  return turmas.some((turma) => turma.id === idTurmaDoAluno);
+}
 
 export interface ResumoAssiduidade {
   diasLetivos: number;
