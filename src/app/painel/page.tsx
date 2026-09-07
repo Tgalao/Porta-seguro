@@ -39,12 +39,23 @@ export default async function Painel({
         </Link>
       )}
 
-      {(sessao.user.perfil === "porteiro" || sessao.user.perfil === "admin") && (
+      {/* Assiduidade: só coordenador e admin. O porteiro identifica quem
+       * passa na portaria, mas não acompanha o histórico de faltas. */}
+      {(sessao.user.perfil === "coordenador" || sessao.user.perfil === "admin") && (
         <Link
           href="/consultas"
           className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
         >
           Consultar assiduidade
+        </Link>
+      )}
+
+      {["professor", "dt", "coordenador", "admin"].includes(sessao.user.perfil) && (
+        <Link
+          href="/horarios"
+          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          Horários das minhas turmas
         </Link>
       )}
 
@@ -62,7 +73,7 @@ export default async function Painel({
           href="/area-pessoal"
           className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
         >
-          O meu código QR
+          A minha área (código QR, horário e assiduidade)
         </Link>
       )}
 
