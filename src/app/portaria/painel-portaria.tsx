@@ -197,13 +197,15 @@ export function PainelPortaria({ linhasIniciais }: { linhasIniciais: LinhaRegist
       {estado.passo === "resultado" && (
         <Semaforo cor={estado.autorizado ? "verde" : "vermelho"}>
           <CartaoAluno aluno={estado.aluno} />
-          <p className="text-sm">{estado.motivo}</p>
+          <p className="mt-2 text-sm">{estado.motivo}</p>
+          <EstadoPortaEHorario aluno={estado.aluno} />
         </Semaforo>
       )}
 
       {estado.passo === "confirmar-identidade" && (
         <Semaforo cor="amarelo">
           <CartaoAluno aluno={estado.aluno} />
+          <EstadoPortaEHorario aluno={estado.aluno} />
           <p className="mt-2 text-sm font-medium">É esta a pessoa à tua frente?</p>
           <div className="mt-1 flex gap-2">
             <button
@@ -330,6 +332,54 @@ function CartaoAluno({ aluno }: { aluno: AlunoResumo }) {
           <p className="text-xs opacity-60">Sem fotografia no sistema</p>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Estado da porta e horário do dia, para o porteiro decidir se aquela
+ * pessoa devia estar ali àquela hora.
+ *
+ * Não mostra assiduidade nem histórico de faltas de propósito: isso não é
+ * da conta do porteiro. O aluno consulta o seu na área pessoal.
+ */
+function EstadoPortaEHorario({ aluno }: { aluno: AlunoResumo }) {
+  const estadoPorta = aluno.estadoPorta;
+  if (!estadoPorta) return null;
+
+  const aberta = estadoPorta.estado === "aberta";
+  // Já vêm filtrados e ordenados pelo servidor (dia da semana em Lisboa).
+  const blocosDeHoje = aluno.blocosHoje ?? [];
+
+  return (
+    <div className="mt-3 flex flex-col gap-1 border-t pt-2">
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <span
+          aria-hidden
+          className={`inline-block h-3 w-3 rounded-full ${aberta ? "bg-green-600" : "bg-red-600"}`}
+        />
+        Porta {aberta ? "aberta" : "fechada"}
+        {estadoPorta.atrasado && (
+          <span className="rounded bg-yellow-200 px-1.5 py-0.5 text-xs font-medium text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100">
+            Chegou atrasado
+          </span>
+        )}
+      </p>
+      <p className="text-sm opacity-80">{estadoPorta.motivo}</p>
+
+      {blocosDeHoje.length > 0 && (
+        <ul className="mt-1 flex flex-col gap-0.5 text-xs opacity-70">
+          {blocosDeHoje.map((bloco, indice) => (
+            <li key={indice} className="flex gap-2">
+              <span className="font-mono tabular-nums">
+                {bloco.horaInicio}–{bloco.horaFim}
+              </span>
+              <span>{bloco.disciplina}</span>
+              {bloco.sala && <span>{bloco.sala}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

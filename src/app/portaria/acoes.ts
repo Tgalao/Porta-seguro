@@ -25,11 +25,19 @@
 
 import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
-import { formatarHora } from "@/lib/datas";
+import { formatarHora, diaDaSemanaEmLisboa } from "@/lib/datas";
 import { Utilizador, Turma, Horario, Registo, Ocorrencia, TokenQR } from "@/models";
 import type { IUtilizador } from "@/models";
-import { decidirEntrada, decidirSaida, validarTokenQR } from "@/lib/regras";
+import {
+  decidirEntrada,
+  decidirSaida,
+  validarTokenQR,
+  calcularEstadoPorta,
+  type ResultadoEstadoPorta,
+} from "@/lib/regras";
 import { notificarMovimento } from "@/lib/notificacoes";
+import type { BlocoHorario } from "@/components/horario-semanal";
+import type { IHorario } from "@/models";
 import type { TipoRegisto, EstadoRegisto, MetodoRegisto } from "@/lib/constantes";
 
 export interface AlunoResumo {
@@ -38,6 +46,18 @@ export interface AlunoResumo {
   fotoUrl?: string;
   numeroAluno?: number;
   turma?: string;
+  /**
+   * Blocos de HOJE e estado da porta, para o porteiro perceber num relance
+   * se aquela pessoa devia estar ali àquela hora. Não inclui assiduidade:
+   * o histórico de faltas não é da conta do porteiro — o aluno consulta o
+   * seu na área pessoal.
+   *
+   * O "hoje" é decidido aqui, no servidor, com o dia da semana em Lisboa —
+   * no browser, `new Date().getDay()` daria o dia do fuso do próprio
+   * computador, que pode não ser o nosso.
+   */
+  blocosHoje?: BlocoHorario[];
+  estadoPorta?: ResultadoEstadoPorta;
 }
 
 /** Uma linha da tabela "registos de hoje". */
@@ -83,13 +103,33 @@ type AlunoParaMovimento = Pick<
   | "suspenso"
 >;
 
-function resumoDoAluno(aluno: AlunoParaMovimento, nomeTurma?: string): AlunoResumo {
+function resumoDoAluno(
+  aluno: AlunoParaMovimento,
+  nomeTurma?: string,
+  horarios?: IHorario[],
+  momento?: Date,
+): AlunoResumo {
   return {
     id: aluno._id.toString(),
     nome: aluno.nomeCompleto,
     fotoUrl: aluno.fotoUrl,
     numeroAluno: aluno.numeroAluno,
     turma: nomeTurma,
+    blocosHoje:
+      horarios && momento
+        ? horarios
+            .filter((h) => h.diaSemana === diaDaSemanaEmLisboa(momento))
+            .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+            .map((h) => ({
+              diaSemana: h.diaSemana,
+              horaInicio: h.horaInicio,
+              horaFim: h.horaFim,
+              disciplina: h.disciplina,
+              sala: h.sala,
+            }))
+        : undefined,
+    estadoPorta:
+      horarios && momento ? calcularEstadoPorta(horarios, momento) : undefined,
   };
 }
 
@@ -109,7 +149,8 @@ async function processarIdentificacao(
     ? await Horario.find({ turmaId: aluno.turmaId }).lean()
     : [];
 
-  const resumo = resumoDoAluno(aluno, turma?.nome);
+  const momento = new Date();
+  const resumo = resumoDoAluno(aluno, turma?.nome, horarios, momento);
 
   // O tipo de movimento não é escolhido pelo porteiro: alterna com o
   // último registo do aluno (se o último foi entrada, agora só pode ser
@@ -118,8 +159,6 @@ async function processarIdentificacao(
     .sort({ dataHora: -1 })
     .lean();
   const tipo: TipoRegisto = ultimoRegisto?.tipo === "entrada" ? "saida" : "entrada";
-
-  const momento = new Date();
 
   if (tipo === "entrada") {
     const decisao = decidirEntrada({ suspenso: aluno.suspenso }, horarios, momento);
@@ -344,12 +383,18 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
     return { ok: false, erro: "O aluno deste código já não existe." };
   }
 
-  const turma = aluno.turmaId ? await Turma.findById(aluno.turmaId).lean() : null;
+  // Além da foto e do nome, o porteiro recebe o horário da turma e o estado
+  // da porta — é o que lhe permite decidir se aquela pessoa devia mesmo
+  // estar ali àquela hora, sem lhe dar acesso ao histórico de faltas.
+  const [turma, horarios] = await Promise.all([
+    aluno.turmaId ? Turma.findById(aluno.turmaId).lean() : null,
+    aluno.turmaId ? Horario.find({ turmaId: aluno.turmaId }).lean() : [],
+  ]);
 
   return {
     ok: true,
     confirmarIdentidade: true,
-    aluno: resumoDoAluno(aluno, turma?.nome),
+    aluno: resumoDoAluno(aluno, turma?.nome, horarios, momento),
   };
 }
 
