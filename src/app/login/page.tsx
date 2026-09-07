@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { FormularioCredenciais } from "./formulario-credenciais";
@@ -41,38 +42,59 @@ export default async function PaginaLogin({
     : null;
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center p-8">
-      <div className="w-full max-w-sm rounded-lg border p-6">
-        <h1 className="mb-1 text-center text-2xl font-bold">PortãoSeguro</h1>
-        <p className="mb-6 text-center text-sm opacity-70">
-          Inicia sessão para continuar
-        </p>
-
-        {mensagemErro && (
-          <p className="mb-4 rounded bg-red-100 px-3 py-2 text-center text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-            {mensagemErro}
-          </p>
-        )}
-
-        <FormularioCredenciais />
-
-        <div className="my-6 flex items-center gap-3 text-xs opacity-50">
-          <div className="h-px flex-1 bg-current" />
-          ou
-          <div className="h-px flex-1 bg-current" />
-        </div>
-
-        <form action={entrarComGoogle}>
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto flex w-full max-w-3xl items-center px-6 py-3">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-slate-600 transition hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-400"
           >
-            <LogoGoogle />
-            Entrar com conta Google
-          </button>
-        </form>
-      </div>
-    </main>
+            ← Página principal
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex flex-1 flex-col items-center justify-center p-8">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-6 flex flex-col items-center gap-2 text-center">
+            <div
+              aria-hidden
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-dashed border-teal-600/50 bg-teal-50 text-[9px] font-semibold uppercase text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
+            >
+              Logo
+            </div>
+            <h1 className="text-2xl font-bold">PortãoSeguro</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Inicia sessão para continuar
+            </p>
+          </div>
+
+          {mensagemErro && (
+            <p className="mb-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+              {mensagemErro}
+            </p>
+          )}
+
+          <FormularioCredenciais />
+
+          <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
+            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+            ou
+            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+          </div>
+
+          <form action={entrarComGoogle}>
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+              <LogoGoogle />
+              Entrar com conta Google
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
   );
 }
 

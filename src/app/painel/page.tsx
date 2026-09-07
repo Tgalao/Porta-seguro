@@ -1,11 +1,58 @@
 import Link from "next/link";
 import { exigirSessao } from "@/lib/permissoes";
 import { signOut } from "@/auth";
+import type { Perfil } from "@/lib/constantes";
+
+interface AtalhoDoPainel {
+  href: string;
+  titulo: string;
+  descricao: string;
+  icone: React.ReactNode;
+  perfis: Perfil[];
+}
+
+const ATALHOS: AtalhoDoPainel[] = [
+  {
+    href: "/portao-teste",
+    titulo: "Portão Teste",
+    descricao: "Simular a leitura de um cartão ou código QR na portaria.",
+    icone: <IconePorta />,
+    perfis: ["porteiro", "admin"],
+  },
+  {
+    href: "/consultas",
+    titulo: "Consultar assiduidade",
+    descricao: "Presenças, atrasos e faltas das turmas que coordenas.",
+    icone: <IconeGrafico />,
+    perfis: ["coordenador", "admin"],
+  },
+  {
+    href: "/horarios",
+    titulo: "Horário de turmas",
+    descricao: "O horário semanal das turmas a que estás associado.",
+    icone: <IconeCalendario />,
+    perfis: ["professor", "dt", "coordenador", "admin"],
+  },
+  {
+    href: "/admin",
+    titulo: "Administração",
+    descricao: "Gerir cursos, turmas, horários e contas de alunos.",
+    icone: <IconeEngrenagem />,
+    perfis: ["admin"],
+  },
+  {
+    href: "/area-pessoal",
+    titulo: "A minha área",
+    descricao: "Código QR, o teu horário e a tua assiduidade.",
+    icone: <IconeUtilizador />,
+    perfis: ["aluno"],
+  },
+];
 
 /**
- * Ecrã provisório: prova que o login, a sessão e o logout funcionam.
- * Nas próximas fases, cada perfil vai ter aqui atalhos para o que lhe
- * interessa (porteiro -> ecrã da portaria, admin -> administração, etc.).
+ * Painel principal — o primeiro ecrã depois do login. Mostra só os
+ * atalhos relevantes para o perfil de quem entrou; cada perfil vê um
+ * subconjunto diferente de ATALHOS, nunca a lista toda.
  */
 export default async function Painel({
   searchParams,
@@ -15,81 +62,159 @@ export default async function Painel({
   const sessao = await exigirSessao();
   const { erro } = await searchParams;
 
+  const atalhosVisiveis = ATALHOS.filter((atalho) => atalho.perfis.includes(sessao.user.perfil));
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-      <h1 className="text-2xl font-bold">Painel</h1>
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
+          <div className="flex items-center gap-3">
+            <div
+              aria-hidden
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-teal-600/50 bg-teal-50 text-[9px] font-semibold uppercase text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
+            >
+              Logo
+            </div>
+            <div className="leading-tight">
+              <p className="font-semibold">PortãoSeguro</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Painel</p>
+            </div>
+          </div>
 
-      {erro === "sem-permissao" && (
-        <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          Não tens permissão para aceder a essa página.
-        </p>
-      )}
+          <form
+            action={async () => {
+              "use server";
+              // Volta à página principal (não ao login): é aí que o site
+              // pede para entrar outra vez, e permite reconsiderar antes de
+              // voltar a autenticar-se.
+              await signOut({ redirectTo: "/" });
+            }}
+          >
+            <button
+              type="submit"
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+              Terminar sessão
+            </button>
+          </form>
+        </div>
+      </header>
 
-      <p>
-        Sessão iniciada como <strong>{sessao.user.name}</strong> (
-        {sessao.user.perfil})
-      </p>
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
+        <div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Sessão iniciada como</p>
+          <h1 className="text-2xl font-bold">{sessao.user.name}</h1>
+          <p className="text-sm text-teal-700 dark:text-teal-400">{ROTULO_PERFIL[sessao.user.perfil]}</p>
+        </div>
 
-      {(sessao.user.perfil === "porteiro" || sessao.user.perfil === "admin") && (
-        <Link
-          href="/portao-teste"
-          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          Portão Teste
-        </Link>
-      )}
+        {erro === "sem-permissao" && (
+          <p className="rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+            Não tens permissão para aceder a essa página.
+          </p>
+        )}
 
-      {/* Assiduidade: só coordenador e admin. O porteiro identifica quem
-       * passa na portaria, mas não acompanha o histórico de faltas. */}
-      {(sessao.user.perfil === "coordenador" || sessao.user.perfil === "admin") && (
-        <Link
-          href="/consultas"
-          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          Consultar assiduidade
-        </Link>
-      )}
+        {atalhosVisiveis.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Ainda não há nada configurado para o teu perfil.
+          </p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {atalhosVisiveis.map((atalho) => (
+              <Link
+                key={atalho.href}
+                href={atalho.href}
+                className="group flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-lg hover:shadow-teal-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-700"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 transition-colors group-hover:bg-teal-700 group-hover:text-white dark:bg-teal-950/50 dark:text-teal-400">
+                  {atalho.icone}
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="font-semibold">{atalho.titulo}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    {atalho.descricao}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
 
-      {["professor", "dt", "coordenador", "admin"].includes(sessao.user.perfil) && (
-        <Link
-          href="/horarios"
-          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          Horário de turmas
-        </Link>
-      )}
+const ROTULO_PERFIL: Record<Perfil, string> = {
+  aluno: "Aluno",
+  porteiro: "Porteiro",
+  professor: "Professor",
+  dt: "Diretor(a) de turma",
+  coordenador: "Coordenador(a)",
+  admin: "Administrador",
+};
 
-      {sessao.user.perfil === "admin" && (
-        <Link
-          href="/admin"
-          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          Administração
-        </Link>
-      )}
+function IconePorta() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
+      <rect x="4" y="3" width="13" height="18" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="13.5" cy="12" r="1" fill="currentColor" />
+      <path d="M17 8v8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
 
-      {sessao.user.perfil === "aluno" && (
-        <Link
-          href="/area-pessoal"
-          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          A minha área (código QR, horário e assiduidade)
-        </Link>
-      )}
+function IconeGrafico() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
+      <path
+        d="M4 20V4M4 20h16"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 16v-4M12.5 16V8M17 16v-6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
-      <form
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/login" });
-        }}
-      >
-        <button
-          type="submit"
-          className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-        >
-          Terminar sessão
-        </button>
-      </form>
-    </main>
+function IconeCalendario() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
+      <rect x="3.5" y="5" width="17" height="15" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconeEngrenagem() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M12 3v2.2M12 18.8V21M21 12h-2.2M5.2 12H3M18.4 5.6l-1.55 1.55M7.15 16.85 5.6 18.4M18.4 18.4l-1.55-1.55M7.15 7.15 5.6 5.6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconeUtilizador() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
+      <circle cx="12" cy="8" r="3.3" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M4.5 20c1.2-3.6 4.2-5.5 7.5-5.5s6.3 1.9 7.5 5.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
