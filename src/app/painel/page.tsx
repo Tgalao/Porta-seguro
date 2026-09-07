@@ -32,10 +32,10 @@ export default async function Painel({
 
       {(sessao.user.perfil === "porteiro" || sessao.user.perfil === "admin") && (
         <Link
-          href="/portaria"
+          href="/portao-teste"
           className="rounded border px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10"
         >
-          Ir para a portaria
+          Portão Teste
         </Link>
       )}
 
