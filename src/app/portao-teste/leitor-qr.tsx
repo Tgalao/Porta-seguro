@@ -21,8 +21,19 @@ export function LeitorQR({ onLido }: { onLido: (token: string) => void }) {
 
   useEffect(() => {
     let cancelado = false;
-    let pararam = false;
     let leitorAtual: import("html5-qrcode").Html5Qrcode | null = null;
+    // Só pode existir UMA chamada a `.stop()` em curso: tanto o callback de
+    // sucesso como a limpeza do useEffect (ao desmontar) precisam de parar
+    // a câmara, e chamá-la das duas vezes ao mesmo tempo é exatamente o que
+    // causava o ecrã a ficar preso a preto no Safari do iPhone — o Chrome
+    // tolera duas paragens simultâneas, o WebKit não. Guardando a promessa
+    // aqui, quem chegar primeiro faz a paragem a sério; o outro só espera
+    // por essa mesma promessa em vez de chamar `.stop()` outra vez.
+    let promessaParagem: Promise<void> | null = null;
+    function pararUmaVez(): Promise<void> {
+      promessaParagem ??= leitorAtual ? leitorAtual.stop().catch(() => {}) : Promise.resolve();
+      return promessaParagem;
+    }
 
     async function iniciar() {
       const { Html5Qrcode } = await import("html5-qrcode");
@@ -36,10 +47,12 @@ export function LeitorQR({ onLido }: { onLido: (token: string) => void }) {
           { facingMode: "environment" },
           { fps: 10, qrbox: 220 },
           (textoDecodificado) => {
-            if (pararam) return;
-            pararam = true;
-            onLidoRef.current(textoDecodificado);
-            leitor.stop().catch(() => {});
+            // Espera a câmara estar mesmo parada antes de avisar o pai —
+            // só aí é que o pai desmonta este componente. Avisar primeiro e
+            // parar depois é o que dava a corrida: o React começava a
+            // desmontar (chamando `.clear()`) enquanto o `.stop()` do
+            // sucesso ainda estava a meio.
+            pararUmaVez().then(() => onLidoRef.current(textoDecodificado));
           },
           () => {
             // Chamado em cada frame sem código encontrado — não é um erro.
@@ -55,8 +68,7 @@ export function LeitorQR({ onLido }: { onLido: (token: string) => void }) {
 
     return () => {
       cancelado = true;
-      leitorAtual
-        ?.stop()
+      pararUmaVez()
         .then(() => leitorAtual?.clear())
         .catch(() => {});
     };
