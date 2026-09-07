@@ -3,7 +3,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador } from "@/models";
 import { FormularioCurso } from "../formulario-curso";
 import { criarCurso } from "../acoes";
-import { LinkVoltar } from "@/components/link-voltar";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaNovoCurso() {
   await exigirPerfil(["admin"]);
@@ -15,13 +15,17 @@ export default async function PaginaNovoCurso() {
     .lean();
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltar href="/admin/cursos" label="Cursos" />
-      <h1 className="text-2xl font-bold">Novo curso</h1>
-      <FormularioCurso
-        acao={criarCurso}
-        coordenadores={coordenadores.map((c) => ({ id: c._id.toString(), nome: c.nomeCompleto }))}
-      />
-    </main>
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao titulo="Novo curso" voltarHref="/admin/cursos" voltarLabel="Cursos" />
+
+      <main className="mx-auto w-full max-w-md flex-1 px-6 py-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <FormularioCurso
+            acao={criarCurso}
+            coordenadores={coordenadores.map((c) => ({ id: c._id.toString(), nome: c.nomeCompleto }))}
+          />
+        </div>
+      </main>
+    </div>
   );
 }

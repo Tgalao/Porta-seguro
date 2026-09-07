@@ -5,7 +5,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Curso, Turma, Utilizador } from "@/models";
 import { removerCurso } from "./acoes";
 import { BotaoConfirmar } from "../botao-confirmar";
-import { LinkVoltar } from "@/components/link-voltar";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaCursos({
   searchParams,
@@ -38,72 +38,87 @@ export default async function PaginaCursos({
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltar href="/admin" label="Administração" />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Cursos</h1>
-        <Link
-          href="/admin/cursos/novo"
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + Novo curso
-        </Link>
-      </div>
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao
+        titulo="Cursos"
+        voltarHref="/admin"
+        voltarLabel="Administração"
+        acao={
+          <Link
+            href="/admin/cursos/novo"
+            className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-teal-800"
+          >
+            + Novo curso
+          </Link>
+        }
+      />
 
-      {erro && (
-        <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          {erro}
-        </p>
-      )}
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
+        {erro && (
+          <p className="mb-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+            {erro}
+          </p>
+        )}
 
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b">
-            <th className="py-1 pr-4">Nome</th>
-            <th className="py-1 pr-4">Sigla</th>
-            <th className="py-1 pr-4">Anos</th>
-            <th className="py-1 pr-4">Coordenador</th>
-            <th className="py-1 pr-4">Turmas</th>
-            <th className="py-1 pr-4"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {cursos.map((curso) => (
-            <tr key={curso._id.toString()} className="border-b last:border-0">
-              <td className="py-1 pr-4">{curso.nome}</td>
-              <td className="py-1 pr-4">{curso.sigla}</td>
-              <td className="py-1 pr-4">{curso.anosDuracao}</td>
-              <td className="py-1 pr-4">
-                {curso.coordenadorId
-                  ? (nomeCoordenadorPorId.get(curso.coordenadorId.toString()) ?? "—")
-                  : "—"}
-              </td>
-              <td className="py-1 pr-4">{turmasPorCurso.get(curso._id.toString()) ?? 0}</td>
-              <td className="py-1 pr-4 text-right">
-                <Link href={`/admin/cursos/${curso._id}`} className="text-blue-600 hover:underline dark:text-blue-400">
-                  Editar
-                </Link>{" "}
-                <form action={removerCurso} className="inline">
-                  <input type="hidden" name="id" value={curso._id.toString()} />
-                  <BotaoConfirmar
-                    mensagem={`Remover o curso "${curso.nome}"?`}
-                    className="ml-2 text-red-600 hover:underline dark:text-red-400"
-                  >
-                    Remover
-                  </BotaoConfirmar>
-                </form>
-              </td>
-            </tr>
-          ))}
-          {cursos.length === 0 && (
-            <tr>
-              <td colSpan={6} className="py-3 text-center opacity-60">
-                Ainda sem cursos.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </main>
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="px-5 py-3 font-medium">Nome</th>
+                <th className="px-5 py-3 font-medium">Sigla</th>
+                <th className="px-5 py-3 font-medium">Anos</th>
+                <th className="px-5 py-3 font-medium">Coordenador</th>
+                <th className="px-5 py-3 font-medium">Turmas</th>
+                <th className="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {cursos.map((curso) => (
+                <tr
+                  key={curso._id.toString()}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
+                >
+                  <td className="px-5 py-3 font-medium">{curso.nome}</td>
+                  <td className="px-5 py-3">{curso.sigla}</td>
+                  <td className="px-5 py-3 tabular-nums">{curso.anosDuracao}</td>
+                  <td className="px-5 py-3">
+                    {curso.coordenadorId
+                      ? (nomeCoordenadorPorId.get(curso.coordenadorId.toString()) ?? "—")
+                      : "—"}
+                  </td>
+                  <td className="px-5 py-3 tabular-nums">
+                    {turmasPorCurso.get(curso._id.toString()) ?? 0}
+                  </td>
+                  <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <Link
+                      href={`/admin/cursos/${curso._id}`}
+                      className="font-medium text-teal-700 hover:underline dark:text-teal-400"
+                    >
+                      Editar
+                    </Link>{" "}
+                    <form action={removerCurso} className="inline">
+                      <input type="hidden" name="id" value={curso._id.toString()} />
+                      <BotaoConfirmar
+                        mensagem={`Remover o curso "${curso.nome}"?`}
+                        className="ml-2 font-medium text-red-600 hover:underline dark:text-red-400"
+                      >
+                        Remover
+                      </BotaoConfirmar>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {cursos.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">
+                    Ainda sem cursos.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
   );
 }

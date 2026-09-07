@@ -11,7 +11,7 @@ export function CampoPasskey() {
         type="password"
         required
         autoComplete="off"
-        className="rounded border px-3 py-2 dark:bg-transparent"
+        className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
       />
     </label>
   );

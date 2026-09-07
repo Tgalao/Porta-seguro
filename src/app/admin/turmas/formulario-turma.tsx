@@ -39,7 +39,7 @@ export function FormularioTurma({
           name="nome"
           required
           defaultValue={turmaInicial?.nome}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -51,7 +51,7 @@ export function FormularioTurma({
           min={1}
           required
           defaultValue={turmaInicial?.ano}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -61,7 +61,7 @@ export function FormularioTurma({
           name="cursoId"
           required
           defaultValue={turmaInicial?.cursoId ?? ""}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         >
           <option value="" disabled>
             — Escolhe um curso —
@@ -79,7 +79,7 @@ export function FormularioTurma({
         <select
           name="diretorTurmaId"
           defaultValue={turmaInicial?.diretorTurmaId ?? ""}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         >
           <option value="">— Sem diretor(a) atribuído(a) —</option>
           {diretores.map((diretor) => (
@@ -97,7 +97,7 @@ export function FormularioTurma({
       <button
         type="submit"
         disabled={aEnviar}
-        className="mt-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="mt-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50"
       >
         {aEnviar ? "A guardar..." : "Guardar"}
       </button>

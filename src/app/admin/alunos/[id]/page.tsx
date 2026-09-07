@@ -4,7 +4,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador, Turma } from "@/models";
 import { FormularioAluno } from "../formulario-aluno";
 import { atualizarAluno } from "../acoes";
-import { LinkVoltar } from "@/components/link-voltar";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaEditarAluno({
   params,
@@ -23,24 +23,32 @@ export default async function PaginaEditarAluno({
   if (!aluno) notFound();
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltar href="/admin/alunos" label="Alunos" />
-      <h1 className="text-2xl font-bold">Editar aluno</h1>
-      <FormularioAluno
-        acao={atualizarAluno}
-        turmas={turmas.map((t) => ({ id: t._id.toString(), nome: t.nome }))}
-        alunoInicial={{
-          id: aluno._id.toString(),
-          nomeCompleto: aluno.nomeCompleto,
-          email: aluno.email,
-          numeroAluno: aluno.numeroAluno,
-          numeroCartao: aluno.numeroCartao,
-          turmaId: aluno.turmaId?.toString(),
-          maiorIdade: aluno.maiorIdade,
-          autorizacaoPais: aluno.autorizacaoPais,
-          suspenso: aluno.suspenso,
-        }}
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao
+        titulo={`Editar aluno — ${aluno.nomeCompleto}`}
+        voltarHref="/admin/alunos"
+        voltarLabel="Alunos"
       />
-    </main>
+
+      <main className="mx-auto w-full max-w-md flex-1 px-6 py-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <FormularioAluno
+            acao={atualizarAluno}
+            turmas={turmas.map((t) => ({ id: t._id.toString(), nome: t.nome }))}
+            alunoInicial={{
+              id: aluno._id.toString(),
+              nomeCompleto: aluno.nomeCompleto,
+              email: aluno.email,
+              numeroAluno: aluno.numeroAluno,
+              numeroCartao: aluno.numeroCartao,
+              turmaId: aluno.turmaId?.toString(),
+              maiorIdade: aluno.maiorIdade,
+              autorizacaoPais: aluno.autorizacaoPais,
+              suspenso: aluno.suspenso,
+            }}
+          />
+        </div>
+      </main>
+    </div>
   );
 }

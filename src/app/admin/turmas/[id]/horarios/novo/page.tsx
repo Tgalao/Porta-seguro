@@ -3,7 +3,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador } from "@/models";
 import { FormularioHorario } from "../formulario-horario";
 import { criarHorario } from "../acoes";
-import { LinkVoltar } from "@/components/link-voltar";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaNovoHorario({
   params,
@@ -20,14 +20,22 @@ export default async function PaginaNovoHorario({
     .lean();
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltar href={`/admin/turmas/${turmaId}`} label="Editar turma" />
-      <h1 className="text-2xl font-bold">Novo bloco de horário</h1>
-      <FormularioHorario
-        acao={criarHorario}
-        turmaId={turmaId}
-        professores={professores.map((p) => ({ id: p._id.toString(), nome: p.nomeCompleto }))}
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao
+        titulo="Novo bloco de horário"
+        voltarHref={`/admin/turmas/${turmaId}`}
+        voltarLabel="Editar turma"
       />
-    </main>
+
+      <main className="mx-auto w-full max-w-md flex-1 px-6 py-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+          <FormularioHorario
+            acao={criarHorario}
+            turmaId={turmaId}
+            professores={professores.map((p) => ({ id: p._id.toString(), nome: p.nomeCompleto }))}
+          />
+        </div>
+      </main>
+    </div>
   );
 }

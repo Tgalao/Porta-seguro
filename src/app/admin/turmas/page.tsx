@@ -4,7 +4,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Turma, Curso, Utilizador } from "@/models";
 import { removerTurma } from "./acoes";
 import { BotaoConfirmar } from "../botao-confirmar";
-import { LinkVoltar } from "@/components/link-voltar";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaTurmas({
   searchParams,
@@ -30,69 +30,81 @@ export default async function PaginaTurmas({
   );
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltar href="/admin" label="Administração" />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Turmas</h1>
-        <Link
-          href="/admin/turmas/novo"
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + Nova turma
-        </Link>
-      </div>
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao
+        titulo="Turmas"
+        voltarHref="/admin"
+        voltarLabel="Administração"
+        acao={
+          <Link
+            href="/admin/turmas/novo"
+            className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-teal-800"
+          >
+            + Nova turma
+          </Link>
+        }
+      />
 
-      {erro && (
-        <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          {erro}
-        </p>
-      )}
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
+        {erro && (
+          <p className="mb-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+            {erro}
+          </p>
+        )}
 
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b">
-            <th className="py-1 pr-4">Nome</th>
-            <th className="py-1 pr-4">Ano</th>
-            <th className="py-1 pr-4">Curso</th>
-            <th className="py-1 pr-4">Alunos</th>
-            <th className="py-1 pr-4"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {turmas.map((turma) => (
-            <tr key={turma._id.toString()} className="border-b last:border-0">
-              <td className="py-1 pr-4">{turma.nome}</td>
-              <td className="py-1 pr-4">{turma.ano}</td>
-              <td className="py-1 pr-4">{nomeCursoPorId.get(turma.cursoId.toString()) ?? "—"}</td>
-              <td className="py-1 pr-4">{alunosPorTurma.get(turma._id.toString()) ?? 0}</td>
-              <td className="py-1 pr-4 text-right">
-                <Link
-                  href={`/admin/turmas/${turma._id}`}
-                  className="text-blue-600 hover:underline dark:text-blue-400"
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="px-5 py-3 font-medium">Nome</th>
+                <th className="px-5 py-3 font-medium">Ano</th>
+                <th className="px-5 py-3 font-medium">Curso</th>
+                <th className="px-5 py-3 font-medium">Alunos</th>
+                <th className="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {turmas.map((turma) => (
+                <tr
+                  key={turma._id.toString()}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                 >
-                  Editar / horários
-                </Link>{" "}
-                <form action={removerTurma} className="inline">
-                  <input type="hidden" name="id" value={turma._id.toString()} />
-                  <BotaoConfirmar
-                    mensagem={`Remover a turma "${turma.nome}"? Os horários dela também são removidos e os alunos ficam sem turma.`}
-                    className="ml-2 text-red-600 hover:underline dark:text-red-400"
-                  >
-                    Remover
-                  </BotaoConfirmar>
-                </form>
-              </td>
-            </tr>
-          ))}
-          {turmas.length === 0 && (
-            <tr>
-              <td colSpan={5} className="py-3 text-center opacity-60">
-                Ainda sem turmas.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </main>
+                  <td className="px-5 py-3 font-medium">{turma.nome}</td>
+                  <td className="px-5 py-3 tabular-nums">{turma.ano}</td>
+                  <td className="px-5 py-3">{nomeCursoPorId.get(turma.cursoId.toString()) ?? "—"}</td>
+                  <td className="px-5 py-3 tabular-nums">
+                    {alunosPorTurma.get(turma._id.toString()) ?? 0}
+                  </td>
+                  <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <Link
+                      href={`/admin/turmas/${turma._id}`}
+                      className="font-medium text-teal-700 hover:underline dark:text-teal-400"
+                    >
+                      Editar / horários
+                    </Link>{" "}
+                    <form action={removerTurma} className="inline">
+                      <input type="hidden" name="id" value={turma._id.toString()} />
+                      <BotaoConfirmar
+                        mensagem={`Remover a turma "${turma.nome}"? Os horários dela também são removidos e os alunos ficam sem turma.`}
+                        className="ml-2 font-medium text-red-600 hover:underline dark:text-red-400"
+                      >
+                        Remover
+                      </BotaoConfirmar>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {turmas.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">
+                    Ainda sem turmas.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
   );
 }

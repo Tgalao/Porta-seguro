@@ -42,7 +42,7 @@ export function FormularioHorario({
         <select
           name="diaSemana"
           defaultValue={horarioInicial?.diaSemana ?? 1}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         >
           {NOMES_DIAS_SEMANA.map((nome, indice) => (
             <option key={nome} value={indice}>
@@ -60,7 +60,7 @@ export function FormularioHorario({
             type="time"
             required
             defaultValue={horarioInicial?.horaInicio}
-            className="rounded border px-3 py-2 dark:bg-transparent"
+            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
           />
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
@@ -70,7 +70,7 @@ export function FormularioHorario({
             type="time"
             required
             defaultValue={horarioInicial?.horaFim}
-            className="rounded border px-3 py-2 dark:bg-transparent"
+            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
           />
         </label>
       </div>
@@ -81,7 +81,7 @@ export function FormularioHorario({
           name="disciplina"
           required
           defaultValue={horarioInicial?.disciplina}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -90,7 +90,7 @@ export function FormularioHorario({
         <select
           name="professorId"
           defaultValue={horarioInicial?.professorId ?? ""}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         >
           <option value="">— Sem professor(a) atribuído(a) —</option>
           {professores.map((professor) => (
@@ -106,7 +106,7 @@ export function FormularioHorario({
         <input
           name="sala"
           defaultValue={horarioInicial?.sala}
-          className="rounded border px-3 py-2 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -117,7 +117,7 @@ export function FormularioHorario({
       <button
         type="submit"
         disabled={aEnviar}
-        className="mt-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="mt-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50"
       >
         {aEnviar ? "A guardar..." : "Guardar"}
       </button>

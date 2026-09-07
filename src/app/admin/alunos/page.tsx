@@ -5,7 +5,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador, Turma } from "@/models";
 import { removerAluno } from "./acoes";
 import { BotaoConfirmar } from "../botao-confirmar";
-import { LinkVoltar } from "@/components/link-voltar";
+import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaAlunos({
   searchParams,
@@ -26,76 +26,89 @@ export default async function PaginaAlunos({
   const nomeTurmaPorId = new Map(turmas.map((t) => [t._id.toString(), t.nome]));
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
-      <LinkVoltar href="/admin" label="Administração" />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Alunos</h1>
-        <Link
-          href="/admin/alunos/novo"
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + Novo aluno
-        </Link>
-      </div>
+    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <CabecalhoSecao
+        titulo="Alunos"
+        voltarHref="/admin"
+        voltarLabel="Administração"
+        acao={
+          <Link
+            href="/admin/alunos/novo"
+            className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-teal-800"
+          >
+            + Novo aluno
+          </Link>
+        }
+      />
 
-      {erro && (
-        <p className="rounded bg-red-100 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          {erro}
-        </p>
-      )}
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
+        {erro && (
+          <p className="mb-4 rounded-lg border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+            {erro}
+          </p>
+        )}
 
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b">
-            <th className="py-1 pr-4">Nome</th>
-            <th className="py-1 pr-4">Turma</th>
-            <th className="py-1 pr-4">Cartão</th>
-            <th className="py-1 pr-4">Estado</th>
-            <th className="py-1 pr-4"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {alunos.map((aluno) => (
-            <tr key={aluno._id.toString()} className="border-b last:border-0">
-              <td className="py-1 pr-4">{aluno.nomeCompleto}</td>
-              <td className="py-1 pr-4">
-                {aluno.turmaId ? (nomeTurmaPorId.get(aluno.turmaId.toString()) ?? "—") : "—"}
-              </td>
-              <td className="py-1 pr-4">{aluno.numeroCartao ?? "—"}</td>
-              <td className="py-1 pr-4">
-                {aluno.suspenso && (
-                  <span className="text-red-600 dark:text-red-400">Suspenso</span>
-                )}
-                {!aluno.suspenso && "—"}
-              </td>
-              <td className="py-1 pr-4 text-right">
-                <Link
-                  href={`/admin/alunos/${aluno._id}`}
-                  className="text-blue-600 hover:underline dark:text-blue-400"
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="px-5 py-3 font-medium">Nome</th>
+                <th className="px-5 py-3 font-medium">Turma</th>
+                <th className="px-5 py-3 font-medium">Cartão</th>
+                <th className="px-5 py-3 font-medium">Estado</th>
+                <th className="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {alunos.map((aluno) => (
+                <tr
+                  key={aluno._id.toString()}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                 >
-                  Editar
-                </Link>{" "}
-                <form action={removerAluno} className="inline">
-                  <input type="hidden" name="id" value={aluno._id.toString()} />
-                  <BotaoConfirmar
-                    mensagem={`Remover o aluno "${aluno.nomeCompleto}"? O histórico de registos e ocorrências dele também é apagado.`}
-                    className="ml-2 text-red-600 hover:underline dark:text-red-400"
-                  >
-                    Remover
-                  </BotaoConfirmar>
-                </form>
-              </td>
-            </tr>
-          ))}
-          {alunos.length === 0 && (
-            <tr>
-              <td colSpan={5} className="py-3 text-center opacity-60">
-                Ainda sem alunos.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </main>
+                  <td className="px-5 py-3 font-medium">{aluno.nomeCompleto}</td>
+                  <td className="px-5 py-3">
+                    {aluno.turmaId ? (nomeTurmaPorId.get(aluno.turmaId.toString()) ?? "—") : "—"}
+                  </td>
+                  <td className="px-5 py-3 font-mono tabular-nums">{aluno.numeroCartao ?? "—"}</td>
+                  <td className="px-5 py-3">
+                    {aluno.suspenso ? (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
+                        Suspenso
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <Link
+                      href={`/admin/alunos/${aluno._id}`}
+                      className="font-medium text-teal-700 hover:underline dark:text-teal-400"
+                    >
+                      Editar
+                    </Link>{" "}
+                    <form action={removerAluno} className="inline">
+                      <input type="hidden" name="id" value={aluno._id.toString()} />
+                      <BotaoConfirmar
+                        mensagem={`Remover o aluno "${aluno.nomeCompleto}"? O histórico de registos e ocorrências dele também é apagado.`}
+                        className="ml-2 font-medium text-red-600 hover:underline dark:text-red-400"
+                      >
+                        Remover
+                      </BotaoConfirmar>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {alunos.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-slate-500 dark:text-slate-400">
+                    Ainda sem alunos.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
   );
 }
