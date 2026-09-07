@@ -52,13 +52,24 @@ async function enviarEmail(destinatario: string, assunto: string, texto: string)
   }
 }
 
-/** Alerta ao administrador sempre que alguém faz login (endurecimento de
- * segurança — não fazia parte da análise original, decisão do aluno). */
+/**
+ * Perfis cujo login gera alerta por email. Só contas com poder sobre os
+ * dados de outras pessoas: um aluno a entrar na sua própria área é o caso
+ * normal e enchia a caixa de correio sem acrescentar nada. O porteiro
+ * também fica de fora — não consegue alterar nada além dos registos que
+ * já faz no dia a dia.
+ */
+const PERFIS_COM_ALERTA_DE_LOGIN: Perfil[] = ["professor", "dt", "coordenador", "admin"];
+
+/** Alerta ao administrador quando entra uma conta de nível superior
+ * (endurecimento de segurança — não fazia parte da análise original). */
 export async function notificarLogin(
   nome: string,
   email: string,
   perfil: Perfil,
 ): Promise<void> {
+  if (!PERFIS_COM_ALERTA_DE_LOGIN.includes(perfil)) return;
+
   const destinatario = process.env.EMAIL_ALERTA_ADMIN;
   if (!destinatario) return;
 
