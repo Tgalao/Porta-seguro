@@ -46,12 +46,16 @@ export type EstadoRegisto = (typeof ESTADOS_REGISTO)[number];
 /**
  * Tipos de ocorrência irregular (RF16 + RF03). Cobre as três situações do
  * QR referidas no requisito ("expirado, já utilizado ou pertencente a outro
- * aluno") e o bloqueio de entrada de alunos suspensos.
+ * aluno"), o bloqueio de entrada de alunos suspensos, e a tentativa de usar
+ * um código QR na direção errada — gerado para entrar mas apresentado para
+ * sair, ou vice-versa (decisão do aluno: o código fica bloqueado à direção
+ * com que foi gerado).
  */
 export const TIPOS_OCORRENCIA = [
   "qr_expirado",
   "qr_ja_utilizado",
   "qr_aluno_diferente",
+  "qr_tipo_incorreto",
   "entrada_suspenso",
 ] as const;
 export type TipoOcorrencia = (typeof TIPOS_OCORRENCIA)[number];

@@ -7,6 +7,7 @@ import {
   type TokenGerado,
   type EstadoTokenQR,
 } from "./acoes";
+import type { TipoRegisto } from "@/lib/constantes";
 
 /** Cada quantos segundos se pergunta ao servidor se o código já foi lido. */
 const INTERVALO_VERIFICACAO_MS = 2000;
@@ -62,6 +63,7 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
     <div className="flex flex-col items-center gap-4">
       {mostrarImagem && (
         <>
+          <RotuloDirecao tipo={token.tipo} />
           {/* eslint-disable-next-line @next/next/no-img-element -- imagem gerada localmente (data URL), não faz sentido otimizar com next/image */}
           <img
             src={token.imagemDataUrl}
@@ -76,7 +78,7 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
         </>
       )}
 
-      {estado.usado && <ResultadoLeitura estado={estado} />}
+      {estado.usado && <ResultadoLeitura estado={estado} tipo={token?.tipo} />}
 
       {expirado && (
         <p className="text-sm text-red-600 dark:text-red-400">Este código expirou.</p>
@@ -94,8 +96,29 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
   );
 }
 
+/** Etiqueta que diz para que serve o código — só entrar, ou só sair. */
+function RotuloDirecao({ tipo }: { tipo: TipoRegisto }) {
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
+        tipo === "entrada"
+          ? "bg-teal-700 text-white"
+          : "bg-slate-700 text-white dark:bg-slate-600"
+      }`}
+    >
+      Só serve para {tipo === "entrada" ? "entrar" : "sair"}
+    </span>
+  );
+}
+
 /** Mensagem mostrada assim que o código deixa de estar por usar. */
-function ResultadoLeitura({ estado }: { estado: Extract<EstadoTokenQR, { usado: true }> }) {
+function ResultadoLeitura({
+  estado,
+  tipo,
+}: {
+  estado: Extract<EstadoTokenQR, { usado: true }>;
+  tipo?: TipoRegisto;
+}) {
   const estilos = {
     aceite:
       "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100",
@@ -105,8 +128,9 @@ function ResultadoLeitura({ estado }: { estado: Extract<EstadoTokenQR, { usado: 
       "border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100",
   } as const;
 
+  const nomeMovimento = tipo === "saida" ? "Saída" : "Entrada";
   const titulos = {
-    aceite: "Entrada/saída autorizada",
+    aceite: `${nomeMovimento} autorizada`,
     recusado: "Não autorizado",
     pendente: "A aguardar confirmação na portaria",
     identidade_rejeitada: "O porteiro não confirmou a tua identidade",

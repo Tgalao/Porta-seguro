@@ -11,6 +11,7 @@
  */
 
 import mongoose, { Schema, type Model, type Types } from "mongoose";
+import { TIPOS_REGISTO, type TipoRegisto } from "@/lib/constantes";
 
 export interface ITokenQR {
   _id: Types.ObjectId;
@@ -21,6 +22,13 @@ export interface ITokenQR {
   validoAte: Date;
   usado: boolean;
   usadoEm?: Date;
+  /**
+   * Direção com que o código foi gerado — decidida no momento da geração
+   * pela mesma regra de alternância usada na portaria (`proximoTipoRegisto`)
+   * e depois EXIGIDA na leitura: um código gerado para entrar nunca serve
+   * para sair, e vice-versa (decisão do aluno).
+   */
+  tipo: TipoRegisto;
 }
 
 const TokenQRSchema = new Schema<ITokenQR>(
@@ -34,6 +42,8 @@ const TokenQRSchema = new Schema<ITokenQR>(
 
     usado: { type: Boolean, default: false },
     usadoEm: { type: Date },
+
+    tipo: { type: String, enum: TIPOS_REGISTO, required: true },
   },
   { timestamps: true },
 );

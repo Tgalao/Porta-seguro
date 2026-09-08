@@ -10,28 +10,42 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
 import { formatarHora } from "@/lib/datas";
 import { TokenQR, Registo, Ocorrencia } from "@/models";
+import { proximoTipoRegisto } from "@/lib/regras";
+import type { TipoRegisto } from "@/lib/constantes";
 
-/** Validade do código, conforme o RF15. */
-const VALIDADE_MS = 2 * 60 * 1000;
+/** Validade do código, conforme o RF15 (decisão do aluno: 1 minuto). */
+const VALIDADE_MS = 1 * 60 * 1000;
 
 export interface TokenGerado {
   id: string;
   validoAteISO: string;
   imagemDataUrl: string;
+  /** Direção com que este código foi gerado — mostrada ao aluno para não
+   * haver dúvida de que só serve para entrar OU só para sair. */
+  tipo: TipoRegisto;
 }
 
 /**
  * Gera um código novo, invalidando qualquer código anterior ainda não
  * usado — só pode existir um código válido por aluno de cada vez.
+ *
+ * A direção (`tipo`) fica decidida já aqui, com a mesma regra de
+ * alternância da portaria — e é EXIGIDA na leitura (`validarTokenQR`): um
+ * código gerado para entrar nunca serve para sair, mesmo que o estado do
+ * aluno mude entretanto.
  */
 export async function gerarNovoTokenQR(): Promise<TokenGerado> {
   const sessao = await exigirPerfil(["aluno"]);
   await ligarBaseDados();
 
-  await TokenQR.updateMany(
-    { alunoId: sessao.user.id, usado: false },
-    { usado: true, usadoEm: new Date() },
-  );
+  const [, ultimoRegisto] = await Promise.all([
+    TokenQR.updateMany(
+      { alunoId: sessao.user.id, usado: false },
+      { usado: true, usadoEm: new Date() },
+    ),
+    Registo.findOne({ alunoId: sessao.user.id }).sort({ dataHora: -1 }).lean(),
+  ]);
+  const tipo = proximoTipoRegisto(ultimoRegisto?.tipo);
 
   // Aleatório e imprevisível — não dá para adivinhar o código de outro
   // aluno a tentar valores ao acaso.
@@ -39,11 +53,22 @@ export async function gerarNovoTokenQR(): Promise<TokenGerado> {
   const criadoEm = new Date();
   const validoAte = new Date(criadoEm.getTime() + VALIDADE_MS);
 
-  const tokenQR = await TokenQR.create({ alunoId: sessao.user.id, token, criadoEm, validoAte });
+  const tokenQR = await TokenQR.create({
+    alunoId: sessao.user.id,
+    token,
+    criadoEm,
+    validoAte,
+    tipo,
+  });
 
   const imagemDataUrl = await QRCode.toDataURL(token, { margin: 1, width: 240 });
 
-  return { id: tokenQR._id.toString(), validoAteISO: validoAte.toISOString(), imagemDataUrl };
+  return {
+    id: tokenQR._id.toString(),
+    validoAteISO: validoAte.toISOString(),
+    imagemDataUrl,
+    tipo,
+  };
 }
 
 export type EstadoTokenQR =
@@ -76,11 +101,22 @@ export async function consultarEstadoTokenQR(idToken: string): Promise<EstadoTok
     return { usado: false };
   }
 
-  // O token fica marcado como usado assim que é lido (RF15: utilização
-  // única), mas o que acontece a seguir demora um pouco mais: o porteiro
-  // ainda tem de confirmar a identidade (RF16) e, numa saída fora do
-  // horário, ainda pode ter de telefonar aos pais. Por isso procura-se o
-  // que aconteceu DEPOIS da leitura, em vez de assumir que já terminou.
+  // O token fica marcado como usado em duas situações: foi lido na portaria
+  // (RF15), ou ficou obsoleto porque a pessoa já teve outro movimento
+  // registado enquanto o código ainda estava por usar (ver
+  // `invalidarTokenQRPendente` em src/app/portao-teste/acoes.ts).
+  //
+  // Nota: uma rejeição por "direção errada" (código gerado para entrar
+  // apresentado para sair, ou vice-versa) NÃO passa por aqui — não marca o
+  // token como usado, de propósito, tal como já acontecia com "aluno
+  // diferente" e "expirado": um código só é considerado gasto quando é
+  // mesmo aceite, não em qualquer tentativa falhada. O porteiro vê o erro
+  // no próprio ecrã; o código continua válido para a pessoa tentar outra
+  // vez na direção certa.
+  //
+  // Também não assume que já terminou logo que fica marcado como usado: o
+  // porteiro ainda pode ter de confirmar a identidade (RF16) ou telefonar
+  // aos pais, e isso demora mais um pouco.
   const desde = tokenQR.usadoEm ?? tokenQR.validoAte;
   const [ocorrenciaRejeitada, registo] = await Promise.all([
     Ocorrencia.findOne({
@@ -88,7 +124,7 @@ export async function consultarEstadoTokenQR(idToken: string): Promise<EstadoTok
       tipo: "qr_aluno_diferente",
       dataHora: { $gte: desde },
     }).lean(),
-    Registo.findOne({ alunoId: sessao.user.id, metodo: "qr", dataHora: { $gte: desde } })
+    Registo.findOne({ alunoId: sessao.user.id, dataHora: { $gte: desde } })
       .sort({ dataHora: 1 })
       .lean(),
   ]);

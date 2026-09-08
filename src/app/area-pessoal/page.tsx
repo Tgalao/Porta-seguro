@@ -46,6 +46,7 @@ export default async function PaginaAreaPessoal() {
       id: tokenExistente._id.toString(),
       validoAteISO: tokenExistente.validoAte.toISOString(),
       imagemDataUrl: await QRCode.toDataURL(tokenExistente.token, { margin: 1, width: 240 }),
+      tipo: tokenExistente.tipo,
     };
   }
 
@@ -94,8 +95,9 @@ export default async function PaginaAreaPessoal() {
         <section className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="font-semibold">O meu código QR</h2>
           <p className="max-w-sm text-center text-sm text-slate-500 dark:text-slate-400">
-            Mostra este código na portaria para entrar ou sair. É válido durante
-            2 minutos e só pode ser usado uma vez.
+            Mostra este código na portaria. É válido durante 1 minuto, só pode
+            ser usado uma vez, e só serve para o movimento — entrada ou saída
+            — indicado abaixo dele.
           </p>
           <GeradorQR tokenInicial={tokenInicial} />
         </section>
