@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import {
-  registarEntradaOuSaida,
   confirmarSaidaComPais,
   lerCodigoQR,
   confirmarIdentidadeQR,
@@ -10,9 +9,7 @@ import {
   type LinhaRegisto,
   type ResultadoIdentificacao,
 } from "./acoes";
-import type { MetodoRegisto } from "@/lib/constantes";
 import { LeitorQR } from "./leitor-qr";
-import { CartaoArrastavel, type CartaoParaSimular } from "./cartao-arrastavel";
 
 type Estado =
   | { passo: "vazio" }
@@ -25,7 +22,6 @@ type Estado =
       motivo: string;
       horarioId?: string;
       momentoISO: string;
-      metodo: MetodoRegisto;
     }
   | { passo: "confirmar-identidade"; aluno: AlunoResumo };
 
@@ -47,23 +43,13 @@ const ROTULOS_TIPO: Record<string, string> = {
  */
 const ESPERA_MINIMA_MS = 900;
 
-export function PainelPortao({
-  linhasIniciais,
-  cartoes,
-}: {
-  linhasIniciais: LinhaRegisto[];
-  cartoes: CartaoParaSimular[];
-}) {
-  const [modoQR, setModoQR] = useState(false);
+export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[] }) {
   const [estado, setEstado] = useState<Estado>({ passo: "vazio" });
   const [linhas, setLinhas] = useState<LinhaRegisto[]>(linhasIniciais);
-  const [idSelecionado, setIdSelecionado] = useState(cartoes[0]?.id ?? "");
   const [aEnviar, iniciarTransicao] = useTransition();
 
-  const cartaoSelecionado = cartoes.find((c) => c.id === idSelecionado) ?? cartoes[0];
-
-  /** Comum ao cartão e à confirmação de identidade do QR — ambos devolvem
-   * o mesmo formato (ok / pendente / resultado final). */
+  /** Comum ao caminho direto e à confirmação de identidade — ambos
+   * devolvem o mesmo formato (ok / pendente / resultado final). */
   function aplicarResultadoIdentificacao(resultado: ResultadoIdentificacao) {
     if (!resultado.ok) {
       setEstado({ passo: "erro", mensagem: resultado.erro });
@@ -76,7 +62,6 @@ export function PainelPortao({
         motivo: resultado.motivo,
         horarioId: resultado.horarioId,
         momentoISO: resultado.momentoISO,
-        metodo: resultado.metodo,
       });
       return;
     }
@@ -89,32 +74,12 @@ export function PainelPortao({
     setLinhas((atuais) => [resultado.linha, ...atuais]);
   }
 
-  function aoPassarCartao(numeroCartao: string) {
-    setEstado({ passo: "a-ler" });
-
-    iniciarTransicao(async () => {
-      // O pedido e a espera mínima correm ao mesmo tempo: o ecrã "A ler..."
-      // dura pelo menos ESPERA_MINIMA_MS, mas nunca mais do que o necessário.
-      const [resultado] = await Promise.all([
-        registarEntradaOuSaida(numeroCartao),
-        new Promise((resolve) => setTimeout(resolve, ESPERA_MINIMA_MS)),
-      ]);
-      aplicarResultadoIdentificacao(resultado);
-    });
-  }
-
   function responderContactoPais(paisAutorizaram: boolean) {
     if (estado.passo !== "pendente") return;
-    const { aluno, horarioId, momentoISO, metodo } = estado;
+    const { aluno, horarioId, momentoISO } = estado;
 
     iniciarTransicao(async () => {
-      const resultado = await confirmarSaidaComPais(
-        aluno.id,
-        horarioId,
-        momentoISO,
-        metodo,
-        paisAutorizaram,
-      );
+      const resultado = await confirmarSaidaComPais(aluno.id, horarioId, momentoISO, paisAutorizaram);
 
       if (!resultado.ok) {
         setEstado({ passo: "erro", mensagem: resultado.erro });
@@ -134,7 +99,6 @@ export function PainelPortao({
   }
 
   function aoLerTokenQR(token: string) {
-    setModoQR(false);
     setEstado({ passo: "a-ler" });
 
     iniciarTransicao(async () => {
@@ -179,130 +143,92 @@ export function PainelPortao({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* --- Simulação do cartão, ou a câmara do QR --------------------- */}
+      {/* --- Leitura do código QR ---------------------------------------- */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold">
-            {modoQR ? "Leitura de código QR" : "Passar cartão"}
-          </h2>
-          <button
-            type="button"
-            onClick={() => setModoQR((atual) => !atual)}
-            disabled={aEnviar}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium transition hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            {modoQR ? "← Voltar ao cartão" : "Ler código QR"}
-          </button>
-        </div>
+        <h2 className="mb-4 font-semibold">Leitura de código QR</h2>
 
-        {modoQR ? (
+        {estado.passo === "vazio" && (
           <div className="flex flex-col items-center gap-3">
             <LeitorQR onLido={aoLerTokenQR} />
             <p className="text-center text-xs text-slate-500 dark:text-slate-400">
               Aponta a câmara ao código do telemóvel do aluno.
             </p>
           </div>
-        ) : cartoes.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Não há alunos com número de cartão atribuído.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-slate-600 dark:text-slate-300">
-                Cartão na mão
-              </span>
-              <select
-                value={idSelecionado}
-                onChange={(evento) => setIdSelecionado(evento.target.value)}
-                disabled={aEnviar}
-                className="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-transparent"
-              >
-                {cartoes.map((cartao) => (
-                  <option key={cartao.id} value={cartao.id}>
-                    {cartao.nome} — {cartao.numeroCartao}
-                    {cartao.turma ? ` (${cartao.turma})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
+        )}
 
-            {cartaoSelecionado && (
-              <CartaoArrastavel
-                cartao={cartaoSelecionado}
-                aoPassar={aoPassarCartao}
-                desativado={aEnviar || estado.passo === "a-ler"}
-              />
+        {estado.passo === "a-ler" && (
+          <div role="status" className="flex items-center justify-center gap-3 py-8">
+            <span
+              aria-hidden
+              className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600"
+            />
+            <p className="text-sm font-medium">A ler...</p>
+          </div>
+        )}
+
+        {(estado.passo === "erro" ||
+          estado.passo === "resultado" ||
+          estado.passo === "confirmar-identidade" ||
+          estado.passo === "pendente") && (
+          <div className="flex flex-col gap-4">
+            {estado.passo === "erro" && (
+              <p className="rounded-xl border-l-4 border-red-600 bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+                {estado.mensagem}
+              </p>
+            )}
+
+            {estado.passo === "resultado" && (
+              <Semaforo cor={estado.autorizado ? "verde" : "vermelho"}>
+                <CartaoAluno aluno={estado.aluno} />
+                <p className="mt-2 text-sm">{estado.motivo}</p>
+                <EstadoPortaEHorario aluno={estado.aluno} />
+              </Semaforo>
+            )}
+
+            {estado.passo === "confirmar-identidade" && (
+              <Semaforo cor="amarelo">
+                <CartaoAluno aluno={estado.aluno} />
+                <EstadoPortaEHorario aluno={estado.aluno} />
+                <p className="mt-3 text-sm font-medium">É esta a pessoa à tua frente?</p>
+                <div className="mt-2 flex gap-2">
+                  <BotaoResposta onClick={() => responderIdentidade(true)} disabled={aEnviar}>
+                    Sim
+                  </BotaoResposta>
+                  <BotaoResposta onClick={() => responderIdentidade(false)} disabled={aEnviar}>
+                    Não é esta pessoa
+                  </BotaoResposta>
+                </div>
+              </Semaforo>
+            )}
+
+            {estado.passo === "pendente" && (
+              <Semaforo cor="amarelo">
+                <CartaoAluno aluno={estado.aluno} />
+                <p className="mt-2 text-sm">{estado.motivo}</p>
+                <p className="mt-3 text-sm font-medium">Os pais autorizam a saída?</p>
+                <div className="mt-2 flex gap-2">
+                  <BotaoResposta onClick={() => responderContactoPais(true)} disabled={aEnviar}>
+                    Sim
+                  </BotaoResposta>
+                  <BotaoResposta onClick={() => responderContactoPais(false)} disabled={aEnviar}>
+                    Não
+                  </BotaoResposta>
+                </div>
+              </Semaforo>
+            )}
+
+            {(estado.passo === "erro" || estado.passo === "resultado") && (
+              <button
+                type="button"
+                onClick={() => setEstado({ passo: "vazio" })}
+                className="self-start rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
+              >
+                Ler o próximo código
+              </button>
             )}
           </div>
         )}
       </section>
-
-      {/* --- Resultado -------------------------------------------------- */}
-      {estado.passo === "a-ler" && (
-        <div
-          role="status"
-          className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
-        >
-          <span
-            aria-hidden
-            className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600"
-          />
-          <p className="text-sm font-medium">A ler...</p>
-        </div>
-      )}
-
-      {estado.passo === "erro" && (
-        <p className="rounded-2xl border-l-4 border-red-600 bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
-          {estado.mensagem}
-        </p>
-      )}
-
-      {estado.passo === "resultado" && (
-        <Semaforo cor={estado.autorizado ? "verde" : "vermelho"}>
-          <CartaoAluno aluno={estado.aluno} />
-          <p className="mt-2 text-sm">{estado.motivo}</p>
-          <EstadoPortaEHorario aluno={estado.aluno} />
-        </Semaforo>
-      )}
-
-      {estado.passo === "confirmar-identidade" && (
-        <Semaforo cor="amarelo">
-          <CartaoAluno aluno={estado.aluno} />
-          <EstadoPortaEHorario aluno={estado.aluno} />
-          <p className="mt-3 text-sm font-medium">É esta a pessoa à tua frente?</p>
-          <div className="mt-2 flex gap-2">
-            <BotaoResposta onClick={() => responderIdentidade(true)} disabled={aEnviar}>
-              Sim
-            </BotaoResposta>
-            <BotaoResposta onClick={() => responderIdentidade(false)} disabled={aEnviar}>
-              Não é esta pessoa
-            </BotaoResposta>
-            <BotaoResposta onClick={() => setEstado({ passo: "vazio" })} disabled={aEnviar}>
-              Cancelar
-            </BotaoResposta>
-          </div>
-        </Semaforo>
-      )}
-
-      {estado.passo === "pendente" && (
-        <Semaforo cor="amarelo">
-          <CartaoAluno aluno={estado.aluno} />
-          <p className="mt-2 text-sm">{estado.motivo}</p>
-          <p className="mt-3 text-sm font-medium">Os pais autorizam a saída?</p>
-          <div className="mt-2 flex gap-2">
-            <BotaoResposta onClick={() => responderContactoPais(true)} disabled={aEnviar}>
-              Sim
-            </BotaoResposta>
-            <BotaoResposta onClick={() => responderContactoPais(false)} disabled={aEnviar}>
-              Não
-            </BotaoResposta>
-            <BotaoResposta onClick={() => setEstado({ passo: "vazio" })} disabled={aEnviar}>
-              Cancelar
-            </BotaoResposta>
-          </div>
-        </Semaforo>
-      )}
 
       {/* --- Registos de hoje ------------------------------------------- */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -314,14 +240,13 @@ export function PainelPortao({
                 <th className="py-2 pr-4 font-medium">Hora</th>
                 <th className="py-2 pr-4 font-medium">Aluno</th>
                 <th className="py-2 pr-4 font-medium">Movimento</th>
-                <th className="py-2 pr-4 font-medium">Método</th>
                 <th className="py-2 pr-4 font-medium">Estado</th>
               </tr>
             </thead>
             <tbody>
               {linhas.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-4 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={4} className="py-4 text-center text-slate-500 dark:text-slate-400">
                     Ainda sem registos hoje.
                   </td>
                 </tr>
@@ -334,7 +259,6 @@ export function PainelPortao({
                   <td className="py-2 pr-4 font-mono tabular-nums">{linha.horaFormatada}</td>
                   <td className="py-2 pr-4">{linha.alunoNome}</td>
                   <td className="py-2 pr-4">{ROTULOS_TIPO[linha.tipo]}</td>
-                  <td className="py-2 pr-4">{linha.metodo === "cartao" ? "Cartão" : "QR"}</td>
                   <td className="py-2 pr-4">{ROTULOS_ESTADO[linha.estado]}</td>
                 </tr>
               ))}

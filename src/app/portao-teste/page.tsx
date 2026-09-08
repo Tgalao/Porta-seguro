@@ -2,14 +2,13 @@ import Link from "next/link";
 import { exigirPerfil } from "@/lib/permissoes";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { limitesDoDiaEmLisboa, formatarHora } from "@/lib/datas";
-import { Registo, Utilizador, Turma } from "@/models";
+import { Registo, Utilizador } from "@/models";
 import { PainelPortao } from "./painel-portao";
-import type { CartaoParaSimular } from "./cartao-arrastavel";
 import type { LinhaRegisto } from "./acoes";
 
 /**
- * Portão Teste (UC01): simula a passagem de um cartão no leitor da
- * portaria, com semáforo e tabela dos registos do dia.
+ * Portão Teste (UC01): leitura de código QR na portaria, com semáforo e
+ * tabela dos registos do dia.
  *
  * Só porteiro e admin — é aqui que se cria um registo de entrada/saída
  * verdadeiro, por isso o acesso é o mesmo do ecrã de portaria de sempre.
@@ -36,31 +35,7 @@ export default async function PaginaPortaoTeste() {
     alunoNome: nomesPorId.get(registo.alunoId.toString()) ?? "Aluno desconhecido",
     tipo: registo.tipo,
     estado: registo.estado,
-    metodo: registo.metodo,
     horaFormatada: formatarHora(registo.dataHora),
-  }));
-
-  // Os cartões que se podem simular. Numa portaria a sério o cartão é
-  // físico; aqui escolhe-se de uma lista, que é o que faz desta página um
-  // "portão de teste" e não o portão verdadeiro.
-  const alunosComCartao = await Utilizador.find({
-    perfil: "aluno",
-    numeroCartao: { $exists: true, $ne: null },
-  })
-    .select("nomeCompleto numeroCartao numeroAluno fotoUrl turmaId")
-    .sort({ nomeCompleto: 1 })
-    .lean();
-
-  const turmas = await Turma.find().select("nome").lean();
-  const nomeTurmaPorId = new Map(turmas.map((turma) => [turma._id.toString(), turma.nome]));
-
-  const cartoes: CartaoParaSimular[] = alunosComCartao.map((aluno) => ({
-    id: aluno._id.toString(),
-    nome: aluno.nomeCompleto,
-    numeroCartao: aluno.numeroCartao ?? "",
-    numeroAluno: aluno.numeroAluno,
-    fotoUrl: aluno.fotoUrl,
-    turma: aluno.turmaId ? nomeTurmaPorId.get(aluno.turmaId.toString()) : undefined,
   }));
 
   return (
@@ -77,7 +52,7 @@ export default async function PaginaPortaoTeste() {
             <div className="leading-tight">
               <h1 className="font-semibold">Portão Teste</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Simulação da leitura na portaria
+                Leitura de código QR na portaria
               </p>
             </div>
           </div>
@@ -92,7 +67,7 @@ export default async function PaginaPortaoTeste() {
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
-        <PainelPortao linhasIniciais={linhasIniciais} cartoes={cartoes} />
+        <PainelPortao linhasIniciais={linhasIniciais} />
       </main>
     </div>
   );

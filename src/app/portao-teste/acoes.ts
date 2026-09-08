@@ -2,25 +2,31 @@
 
 /**
  * Server Actions do ecrã da portaria (UC01 — Registar entrada/saída de
- * aluno). O fluxo tem até três passos, consoante o método de identificação
- * e a decisão tomada:
+ * aluno). Identificação só por código QR (decisão do aluno: a simulação de
+ * cartão físico saiu do Portão Teste). O fluxo tem até três passos:
  *
- *   1. `registarEntradaOuSaida` (cartão) ou `lerCodigoQR` (QR) identificam
- *      o aluno. No caso do QR, o código só fica marcado como usado e o
+ *   1. `lerCodigoQR` lê o código: confirma que é válido, ainda não foi
+ *      usado, está dentro do minuto de validade e serve para a direção
+ *      certa (ver RF15 abaixo). O código só fica marcado como usado e o
  *      aluno só é mostrado ao porteiro para CONFIRMAÇÃO VISUAL — o sistema
  *      não tem forma automática de saber se quem apresenta o telemóvel é
- *      mesmo o dono do código (não há cartão físico nem segundo fator);
- *      por isso o campo `fotoUrl` foi acrescentado ao modelo Utilizador
- *      logo na Fase 1, para o porteiro poder comparar com a pessoa à
- *      frente. Essa confirmação é dada a `confirmarIdentidadeQR`.
- *   2. Depois de identificado (por cartão, ou por QR com identidade
- *      confirmada), `processarIdentificacao` decide o tipo de movimento e
- *      aplica as regras da Fase 3. Entradas e saídas autorizadas ficam
- *      logo gravadas. Só a saída NÃO autorizada fica pendente — nesse caso
- *      não se grava nada ainda, porque o 2.º fluxograma do UC01 exige
- *      primeiro que o porteiro contacte os pais.
+ *      mesmo o dono do código (não há segundo fator); por isso o campo
+ *      `fotoUrl` foi acrescentado ao modelo Utilizador logo na Fase 1, para
+ *      o porteiro poder comparar com a pessoa à frente. Essa confirmação é
+ *      dada a `confirmarIdentidadeQR`.
+ *   2. Depois de a identidade confirmada, `processarIdentificacao` aplica
+ *      as regras da Fase 3. Entradas e saídas autorizadas ficam logo
+ *      gravadas. Só a saída NÃO autorizada fica pendente — nesse caso não
+ *      se grava nada ainda, porque o 2.º fluxograma do UC01 exige primeiro
+ *      que o porteiro contacte os pais.
  *   3. `confirmarSaidaComPais` grava o resultado desse contacto telefónico
  *      (o programa nunca liga para ninguém sozinho — RF04).
+ *
+ * RF15 (decisão do aluno): um código QR só é válido durante 1 minuto, só
+ * pode ser usado uma vez, e fica bloqueado à direção (entrada OU saída)
+ * decidida no momento em que foi gerado — ver `proximoTipoRegisto` e
+ * `validarTokenQR`. Gerar um código para entrar e tentar usá-lo para sair
+ * (ou o inverso) é recusado.
  */
 
 import { ligarBaseDados } from "@/lib/mongoose";
@@ -33,12 +39,13 @@ import {
   decidirSaida,
   validarTokenQR,
   calcularEstadoPorta,
+  proximoTipoRegisto,
   type ResultadoEstadoPorta,
 } from "@/lib/regras";
 import { notificarMovimento } from "@/lib/notificacoes";
 import type { BlocoHorario } from "@/components/horario-semanal";
 import type { IHorario } from "@/models";
-import type { TipoRegisto, EstadoRegisto, MetodoRegisto } from "@/lib/constantes";
+import type { TipoRegisto, EstadoRegisto } from "@/lib/constantes";
 
 export interface AlunoResumo {
   id: string;
@@ -66,7 +73,6 @@ export interface LinhaRegisto {
   alunoNome: string;
   tipo: TipoRegisto;
   estado: EstadoRegisto;
-  metodo: MetodoRegisto;
   horaFormatada: string;
 }
 
@@ -87,7 +93,6 @@ export type ResultadoIdentificacao =
       motivo: string;
       horarioId?: string;
       momentoISO: string;
-      metodo: MetodoRegisto;
     };
 
 type AlunoParaMovimento = Pick<
@@ -102,6 +107,19 @@ type AlunoParaMovimento = Pick<
   | "autorizacaoPais"
   | "suspenso"
 >;
+
+/**
+ * Qualquer movimento registado torna obsoleto um código QR que a pessoa
+ * ainda tenha por usar: refletia uma intenção de entrada/saída que já
+ * deixou de fazer sentido depois deste movimento.
+ *
+ * Mesma ideia (e quase o mesmo código) de `gerarNovoTokenQR`: gerar um
+ * código novo já invalidava os anteriores; isto invalida-os também quando
+ * o movimento acaba por se concretizar.
+ */
+async function invalidarTokenQRPendente(alunoId: IUtilizador["_id"], momento: Date): Promise<void> {
+  await TokenQR.updateMany({ alunoId, usado: false }, { usado: true, usadoEm: momento });
+}
 
 function resumoDoAluno(
   aluno: AlunoParaMovimento,
@@ -134,14 +152,11 @@ function resumoDoAluno(
 }
 
 /**
- * Decide o tipo de movimento (alterna com o último registo do aluno) e
- * aplica as regras da Fase 3. Partilhada pelo cartão e pelo QR — a única
- * diferença entre os dois métodos é como se chegou até aqui com um aluno
- * já identificado.
+ * Aplica as regras da Fase 3 depois de o aluno já estar identificado (QR
+ * lido + identidade confirmada pelo porteiro).
  */
 async function processarIdentificacao(
   aluno: AlunoParaMovimento,
-  metodo: MetodoRegisto,
   registadoPorId: string,
 ): Promise<ResultadoIdentificacao> {
   const turma = aluno.turmaId ? await Turma.findById(aluno.turmaId).lean() : null;
@@ -153,12 +168,12 @@ async function processarIdentificacao(
   const resumo = resumoDoAluno(aluno, turma?.nome, horarios, momento);
 
   // O tipo de movimento não é escolhido pelo porteiro: alterna com o
-  // último registo do aluno (se o último foi entrada, agora só pode ser
-  // saída, e vice-versa; sem registos anteriores, é sempre entrada).
+  // último registo do aluno (mesma regra usada para bloquear a direção do
+  // QR na geração — ver `proximoTipoRegisto`).
   const ultimoRegisto = await Registo.findOne({ alunoId: aluno._id })
     .sort({ dataHora: -1 })
     .lean();
-  const tipo: TipoRegisto = ultimoRegisto?.tipo === "entrada" ? "saida" : "entrada";
+  const tipo = proximoTipoRegisto(ultimoRegisto?.tipo);
 
   if (tipo === "entrada") {
     const decisao = decidirEntrada({ suspenso: aluno.suspenso }, horarios, momento);
@@ -167,7 +182,7 @@ async function processarIdentificacao(
       alunoId: aluno._id,
       dataHora: momento,
       tipo: "entrada",
-      metodo,
+      metodo: "qr",
       estado: decisao.autorizado ? "autorizado" : "nao_autorizado",
       motivo: decisao.motivo,
       horarioId: decisao.horarioId,
@@ -183,14 +198,17 @@ async function processarIdentificacao(
       });
     }
 
-    await notificarMovimento(
-      aluno.nomeCompleto,
-      aluno.email,
-      "entrada",
-      decisao.autorizado,
-      decisao.motivo,
-      momento,
-    );
+    await Promise.all([
+      notificarMovimento(
+        aluno.nomeCompleto,
+        aluno.email,
+        "entrada",
+        decisao.autorizado,
+        decisao.motivo,
+        momento,
+      ),
+      invalidarTokenQRPendente(aluno._id, momento),
+    ]);
 
     return {
       ok: true,
@@ -203,7 +221,6 @@ async function processarIdentificacao(
         alunoNome: resumo.nome,
         tipo: "entrada",
         estado: registo.estado,
-        metodo,
         horaFormatada: formatarHora(momento),
       },
     };
@@ -223,7 +240,6 @@ async function processarIdentificacao(
       motivo: decisao.motivo,
       horarioId: decisao.horarioId?.toString(),
       momentoISO: momento.toISOString(),
-      metodo,
     };
   }
 
@@ -231,14 +247,17 @@ async function processarIdentificacao(
     alunoId: aluno._id,
     dataHora: momento,
     tipo: "saida",
-    metodo,
+    metodo: "qr",
     estado: "autorizado",
     motivo: decisao.motivo,
     horarioId: decisao.horarioId,
     registadoPorId,
   });
 
-  await notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", true, decisao.motivo, momento);
+  await Promise.all([
+    notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", true, decisao.motivo, momento),
+    invalidarTokenQRPendente(aluno._id, momento),
+  ]);
 
   return {
     ok: true,
@@ -251,34 +270,9 @@ async function processarIdentificacao(
       alunoNome: resumo.nome,
       tipo: "saida",
       estado: "autorizado",
-      metodo,
       horaFormatada: formatarHora(momento),
     },
   };
-}
-
-/** Identifica o aluno pelo número do cartão e regista o movimento. */
-export async function registarEntradaOuSaida(
-  numeroCartao: string,
-): Promise<ResultadoIdentificacao> {
-  const sessao = await exigirPerfil(["porteiro", "admin"]);
-  await ligarBaseDados();
-
-  const cartao = numeroCartao.trim();
-  if (!cartao) {
-    return { ok: false, erro: "Introduz o número do cartão." };
-  }
-
-  const aluno = await Utilizador.findOne({
-    numeroCartao: cartao,
-    perfil: "aluno",
-  }).lean();
-
-  if (!aluno) {
-    return { ok: false, erro: "Cartão não reconhecido." };
-  }
-
-  return processarIdentificacao(aluno, "cartao", sessao.user.id);
 }
 
 export type ResultadoConfirmacao =
@@ -290,7 +284,6 @@ export async function confirmarSaidaComPais(
   alunoId: string,
   horarioId: string | undefined,
   momentoISO: string,
-  metodo: MetodoRegisto,
   paisAutorizaram: boolean,
 ): Promise<ResultadoConfirmacao> {
   const sessao = await exigirPerfil(["porteiro", "admin"]);
@@ -310,7 +303,7 @@ export async function confirmarSaidaComPais(
     alunoId: aluno._id,
     dataHora: momento,
     tipo: "saida",
-    metodo,
+    metodo: "qr",
     estado: paisAutorizaram ? "confirmado_pais" : "nao_autorizado",
     motivo,
     horarioId,
@@ -318,7 +311,10 @@ export async function confirmarSaidaComPais(
     confirmacaoPais: paisAutorizaram,
   });
 
-  await notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", paisAutorizaram, motivo, momento);
+  await Promise.all([
+    notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", paisAutorizaram, motivo, momento),
+    invalidarTokenQRPendente(aluno._id, momento),
+  ]);
 
   return {
     ok: true,
@@ -328,17 +324,10 @@ export async function confirmarSaidaComPais(
       alunoNome: aluno.nomeCompleto,
       tipo: "saida",
       estado: registo.estado,
-      metodo,
       horaFormatada: formatarHora(momento),
     },
   };
 }
-
-const MENSAGENS_QR_INVALIDO = {
-  aluno_diferente: "Este código QR não pertence a este aluno.",
-  ja_utilizado: "Este código QR já foi utilizado.",
-  expirado: "Este código QR já expirou.",
-} as const;
 
 export type ResultadoLeituraQR =
   | { ok: false; erro: string }
@@ -359,10 +348,19 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
   }
 
   const momento = new Date();
+
+  // A direção esperada é calculada com a MESMA regra usada quando o código
+  // foi gerado — se o aluno já teve outro movimento entretanto, deixa de
+  // bater certo com `tokenQR.tipo`, e é isso que `validarTokenQR` recusa.
+  const ultimoRegisto = await Registo.findOne({ alunoId: tokenQR.alunoId })
+    .sort({ dataHora: -1 })
+    .lean();
+  const tipoEsperado = proximoTipoRegisto(ultimoRegisto?.tipo);
+
   // `alunoIdQueApresenta` é sempre o dono do token: não há, neste ecrã,
   // nenhuma segunda fonte que diga quem está fisicamente a apresentá-lo —
   // essa verificação é feita a seguir, visualmente, pelo porteiro.
-  const validacao = validarTokenQR(tokenQR, tokenQR.alunoId, momento);
+  const validacao = validarTokenQR(tokenQR, tokenQR.alunoId, tipoEsperado, momento);
 
   if (!validacao.valido) {
     await Ocorrencia.create({
@@ -370,7 +368,12 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
       tipo: `qr_${validacao.motivo}`,
       descricao: `Tentativa de utilizar um código QR ${validacao.motivo.replace("_", " ")}.`,
     });
-    return { ok: false, erro: MENSAGENS_QR_INVALIDO[validacao.motivo] };
+
+    const mensagem =
+      validacao.motivo === "tipo_incorreto"
+        ? `Este código só serve para ${tokenQR.tipo === "entrada" ? "entrar" : "sair"}.`
+        : MENSAGENS_QR_INVALIDO[validacao.motivo];
+    return { ok: false, erro: mensagem };
   }
 
   // Utilização única (RF15): marca-se como usado já aqui, mesmo que o
@@ -397,6 +400,12 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
     aluno: resumoDoAluno(aluno, turma?.nome, horarios, momento),
   };
 }
+
+const MENSAGENS_QR_INVALIDO = {
+  aluno_diferente: "Este código QR não pertence a este aluno.",
+  ja_utilizado: "Este código QR já foi utilizado.",
+  expirado: "Este código QR já expirou.",
+} as const;
 
 export type ResultadoConfirmacaoIdentidade =
   | { ok: false; erro: string }
@@ -434,5 +443,5 @@ export async function confirmarIdentidadeQR(
     };
   }
 
-  return processarIdentificacao(aluno, "qr", sessao.user.id);
+  return processarIdentificacao(aluno, sessao.user.id);
 }
