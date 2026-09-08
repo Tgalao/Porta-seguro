@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { gerarNovoTokenQR, type TokenGerado } from "./acoes";
+import {
+  gerarNovoTokenQR,
+  consultarEstadoTokenQR,
+  type TokenGerado,
+  type EstadoTokenQR,
+} from "./acoes";
+
+/** Cada quantos segundos se pergunta ao servidor se o código já foi lido. */
+const INTERVALO_VERIFICACAO_MS = 2000;
 
 /** Quantos segundos faltam até `validoAteISO`, nunca negativo. */
 function segundosRestantes(validoAteISO: string): number {
@@ -14,31 +22,45 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
   const [segundos, setSegundos] = useState(() =>
     tokenInicial ? segundosRestantes(tokenInicial.validoAteISO) : 0,
   );
+  const [estado, setEstado] = useState<EstadoTokenQR>({ usado: false });
   const [aGerar, iniciarTransicao] = useTransition();
 
-  // Conta o tempo a partir de `validoAteISO` (não de um contador local), para
-  // não desacertar se o separador ficar em segundo plano uns segundos.
+  // Um único intervalo faz as duas coisas: atualiza a contagem decrescente
+  // E pergunta ao servidor se o código já foi lido — não vale a pena dois
+  // temporizadores separados para o mesmo código.
   useEffect(() => {
-    if (!token) return;
-    const intervalo = setInterval(() => {
+    if (!token || estado.usado) return;
+
+    const intervalo = setInterval(async () => {
       setSegundos(segundosRestantes(token.validoAteISO));
-    }, 1000);
+
+      const novoEstado = await consultarEstadoTokenQR(token.id);
+      if (novoEstado.usado) {
+        setEstado(novoEstado);
+      }
+    }, INTERVALO_VERIFICACAO_MS);
+
     return () => clearInterval(intervalo);
-  }, [token]);
+  }, [token, estado.usado]);
 
   function gerar() {
     iniciarTransicao(async () => {
       const novo = await gerarNovoTokenQR();
       setToken(novo);
       setSegundos(segundosRestantes(novo.validoAteISO));
+      setEstado({ usado: false });
     });
   }
 
-  const expirado = token !== null && segundos <= 0;
+  const expirado = token !== null && !estado.usado && segundos <= 0;
+  // Uma vez usado (lido pelo porteiro), a imagem do QR desaparece sempre —
+  // é a única forma de garantir que ninguém a mostra a outra pessoa depois
+  // de já ter servido.
+  const mostrarImagem = token && !expirado && !estado.usado;
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {token && !expirado && (
+      {mostrarImagem && (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element -- imagem gerada localmente (data URL), não faz sentido otimizar com next/image */}
           <img
@@ -54,6 +76,8 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
         </>
       )}
 
+      {estado.usado && <ResultadoLeitura estado={estado} />}
+
       {expirado && (
         <p className="text-sm text-red-600 dark:text-red-400">Este código expirou.</p>
       )}
@@ -66,6 +90,38 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
       >
         {aGerar ? "A gerar..." : token ? "Gerar novo código" : "Gerar código QR"}
       </button>
+    </div>
+  );
+}
+
+/** Mensagem mostrada assim que o código deixa de estar por usar. */
+function ResultadoLeitura({ estado }: { estado: Extract<EstadoTokenQR, { usado: true }> }) {
+  const estilos = {
+    aceite:
+      "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100",
+    recusado: "border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100",
+    pendente: "border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100",
+    identidade_rejeitada:
+      "border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100",
+  } as const;
+
+  const titulos = {
+    aceite: "Entrada/saída autorizada",
+    recusado: "Não autorizado",
+    pendente: "A aguardar confirmação na portaria",
+    identidade_rejeitada: "O porteiro não confirmou a tua identidade",
+  } as const;
+
+  return (
+    <div
+      role="status"
+      className={`w-full max-w-xs rounded-xl border-l-4 p-4 text-center text-sm ${estilos[estado.resultado]}`}
+    >
+      <p className="font-semibold">
+        Código utilizado{estado.horaFormatada ? ` às ${estado.horaFormatada}` : ""}
+      </p>
+      <p className="mt-1">{titulos[estado.resultado]}</p>
+      {estado.motivo && <p className="mt-1 text-xs opacity-80">{estado.motivo}</p>}
     </div>
   );
 }

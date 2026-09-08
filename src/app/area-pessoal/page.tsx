@@ -43,6 +43,7 @@ export default async function PaginaAreaPessoal() {
   let tokenInicial: TokenGerado | null = null;
   if (tokenExistente) {
     tokenInicial = {
+      id: tokenExistente._id.toString(),
       validoAteISO: tokenExistente.validoAte.toISOString(),
       imagemDataUrl: await QRCode.toDataURL(tokenExistente.token, { margin: 1, width: 240 }),
     };
