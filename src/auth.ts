@@ -23,8 +23,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Palavra-passe", type: "password" },
       },
-      authorize: (credenciais) =>
-        autorizarCredenciais(credenciais?.email, credenciais?.password),
+      authorize: (credenciais, pedido) =>
+        autorizarCredenciais(
+          credenciais?.email,
+          credenciais?.password,
+          // Só para ficar registado de onde veio uma tentativa falhada. O
+          // bloqueio é sempre por conta, nunca por este endereço: além de
+          // ser falsificável, bastava trocar de rede para o contornar.
+          pedido.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+        ),
     }),
 
     Google({
