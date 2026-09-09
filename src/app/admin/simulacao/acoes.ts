@@ -37,7 +37,7 @@ export async function simularPassagem(
   data: string,
   hora: string,
 ): Promise<ResultadoMovimento> {
-  const sessao = await exigirPerfil(["admin"]);
+  const sessao = await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const aluno = await Utilizador.findOne({ _id: alunoId, perfil: "aluno" }).lean();
@@ -60,7 +60,7 @@ export async function confirmarSaidaSimulada(
   momentoISO: string,
   paisAutorizaram: boolean,
 ): Promise<ResultadoConfirmacao> {
-  const sessao = await exigirPerfil(["admin"]);
+  const sessao = await exigirPerfil(["gestor", "admin"]);
   return confirmarSaidaComPaisPartilhado(
     alunoId,
     horarioId,

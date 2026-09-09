@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { simularPassagem, confirmarSaidaSimulada } from "./acoes";
 import type { AlunoResumo, ResultadoMovimento } from "@/lib/movimento";
+import { SelectPersonalizado } from "@/components/select-personalizado";
 import {
   CartaoAluno,
   EstadoPortaEHorario,
@@ -28,15 +29,24 @@ type Estado =
       momentoISO: string;
     };
 
-/** "2026-09-09" — data de hoje, em Lisboa, para pré-preencher o formulário. */
-function dataDeHojeEmLisboa(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
+/**
+ * Data e hora ATUAIS deste computador ("do browser", como pedido) — não a
+ * hora de Lisboa, de propósito: o formulário serve para poupar o
+ * preenchimento manual quando se quer só testar "agora mesmo", e "agora
+ * mesmo" é o relógio de quem está a usar o site, não um fuso fixo.
+ */
+function agoraNoBrowser(): { data: string; hora: string } {
+  const agora = new Date();
+  const doisDigitos = (n: number) => String(n).padStart(2, "0");
+  return {
+    data: `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}`,
+    hora: `${doisDigitos(agora.getHours())}:${doisDigitos(agora.getMinutes())}`,
+  };
 }
 
 export function FormularioSimulacao({ alunos }: { alunos: AlunoParaSeletor[] }) {
   const [alunoId, setAlunoId] = useState(alunos[0]?.id ?? "");
-  const [data, setData] = useState(dataDeHojeEmLisboa());
-  const [hora, setHora] = useState("08:30");
+  const [{ data, hora }, setDataHora] = useState(agoraNoBrowser);
   const [estado, setEstado] = useState<Estado>({ passo: "formulario" });
   const [aEnviar, iniciarTransicao] = useTransition();
 
@@ -96,64 +106,58 @@ export function FormularioSimulacao({ alunos }: { alunos: AlunoParaSeletor[] }) 
     });
   }
 
+  const opcoesAlunos = alunos.map((aluno) => ({
+    valor: aluno.id,
+    rotulo: aluno.turma ? `${aluno.nome} — ${aluno.turma}` : aluno.nome,
+  }));
+
   return (
     <div className="flex flex-col gap-6">
       <form
         onSubmit={simular}
-        className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+        className="flex flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
       >
-        <div>
-          <label htmlFor="aluno" className="mb-1 block text-sm font-medium">
-            Aluno
-          </label>
-          <select
-            id="aluno"
-            value={alunoId}
-            onChange={(evento) => setAlunoId(evento.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-          >
-            {alunos.map((aluno) => (
-              <option key={aluno.id} value={aluno.id}>
-                {aluno.nome}
-                {aluno.turma ? ` — ${aluno.turma}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectPersonalizado
+          rotulo="Aluno"
+          valor={alunoId}
+          onAlterar={setAlunoId}
+          opcoes={opcoesAlunos}
+        />
 
         <div className="flex flex-wrap gap-4">
-          <div>
-            <label htmlFor="data" className="mb-1 block text-sm font-medium">
-              Dia
-            </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Dia
             <input
-              id="data"
               type="date"
               value={data}
-              onChange={(evento) => setData(evento.target.value)}
+              onChange={(evento) => setDataHora((atual) => ({ ...atual, data: evento.target.value }))}
               required
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+              className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
             />
-          </div>
-          <div>
-            <label htmlFor="hora" className="mb-1 block text-sm font-medium">
-              Hora
-            </label>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Hora
             <input
-              id="hora"
               type="time"
               value={hora}
-              onChange={(evento) => setHora(evento.target.value)}
+              onChange={(evento) => setDataHora((atual) => ({ ...atual, hora: evento.target.value }))}
               required
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+              className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
             />
-          </div>
+          </label>
+          <button
+            type="button"
+            onClick={() => setDataHora(agoraNoBrowser())}
+            className="self-end rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:border-blue-400 hover:text-blue-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-600 dark:hover:text-blue-400"
+          >
+            Agora
+          </button>
         </div>
 
         <button
           type="submit"
           disabled={aEnviar || !alunoId}
-          className="self-start rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:opacity-50"
+          className="self-start rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-800 disabled:opacity-50"
         >
           {aEnviar ? "A simular..." : "Simular passagem"}
         </button>

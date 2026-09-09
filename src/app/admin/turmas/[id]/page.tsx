@@ -17,7 +17,7 @@ export default async function PaginaEditarTurma({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
   const { id } = await params;
   const { erro } = await searchParams;
@@ -64,14 +64,22 @@ export default async function PaginaEditarTurma({
               {erro}
             </p>
           )}
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold">Horário semanal (RF10)</h2>
-            <Link
-              href={`/admin/turmas/${id}/horarios/novo`}
-              className="rounded-lg bg-blue-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-800"
-            >
-              + Novo bloco
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href={`/admin/turmas/${id}/horarios/importar`}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+              >
+                Importar Excel
+              </Link>
+              <Link
+                href={`/admin/turmas/${id}/horarios/novo`}
+                className="rounded-lg bg-blue-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-800"
+              >
+                + Novo bloco
+              </Link>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
