@@ -12,7 +12,7 @@ export default async function PaginaCursos({
 }: {
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
   const { erro } = await searchParams;
 

@@ -21,7 +21,7 @@ export interface TurmaDoAmbito {
 /**
  * Devolve as turmas que este utilizador pode ver:
  *
- *  - admin        -> a escola toda;
+ *  - admin/gestor -> a escola toda;
  *  - coordenador  -> as turmas dos cursos que coordena;
  *  - professor/dt -> as turmas onde tem blocos de horário atribuídos, mais
  *                    as turmas de que é diretor;
@@ -42,7 +42,7 @@ export async function turmasDoUtilizador(
 ): Promise<TurmaDoAmbito[]> {
   await ligarBaseDados();
 
-  if (perfil === "admin") {
+  if (perfil === "admin" || perfil === "gestor") {
     const todas = await Turma.find().select("nome ano").sort({ nome: 1 }).lean();
     return todas.map(paraTurmaDoAmbito);
   }

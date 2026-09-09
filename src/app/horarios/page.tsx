@@ -23,7 +23,7 @@ export default async function PaginaHorarios({
 }: {
   searchParams: Promise<{ vista?: string }>;
 }) {
-  const sessao = await exigirPerfil(["professor", "dt", "coordenador", "admin"]);
+  const sessao = await exigirPerfil(["professor", "dt", "coordenador", "gestor", "admin"]);
   await ligarBaseDados();
   const { vista } = await searchParams;
   const vistaInicial = vista === "pessoal" ? "pessoal" : vista === "turma" ? "turma" : undefined;
@@ -94,7 +94,7 @@ export default async function PaginaHorarios({
   const meuHorario =
     sessao.user.perfil === "professor" ? (blocosPorProfessor.get(sessao.user.id) ?? []) : undefined;
   const professoresComHorario: ProfessorComHorario[] | undefined =
-    sessao.user.perfil === "admin"
+    sessao.user.perfil === "admin" || sessao.user.perfil === "gestor"
       ? idsProfessores
           .map((id) => ({ id, nome: nomePorId.get(id) ?? "—", blocos: blocosPorProfessor.get(id) ?? [] }))
           .sort((a, b) => a.nome.localeCompare(b.nome, "pt-PT"))

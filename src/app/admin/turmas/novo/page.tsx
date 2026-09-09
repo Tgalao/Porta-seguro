@@ -6,7 +6,7 @@ import { criarTurma } from "../acoes";
 import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaNovaTurma() {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const [cursos, diretores] = await Promise.all([

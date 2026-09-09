@@ -25,7 +25,7 @@ export async function GET() {
   // dados e o endereço do servidor no Atlas não são coisas para dar a
   // desconhecidos: os detalhes só vão para um admin autenticado.
   const sessao = await auth();
-  const eAdmin = sessao?.user?.perfil === "admin";
+  const eAdmin = sessao?.user?.perfil === "admin" || sessao?.user?.perfil === "gestor";
 
   try {
     const ligacao = await ligarBaseDados();

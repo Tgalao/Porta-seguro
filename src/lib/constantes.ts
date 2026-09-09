@@ -16,13 +16,21 @@
 /** Nota: o modelo de dados da análise não incluía "porteiro" na lista de
  * perfis, mas o porteiro é o utilizador principal do ecrã da portaria — sem
  * este perfil ninguém conseguiria autenticar-se para o usar. Foi acrescentado
- * aqui de propósito. */
+ * aqui de propósito.
+ *
+ * "gestor" (decisão do aluno): as mesmas permissões do admin em toda a
+ * administração (cursos, turmas, alunos, horários, consultas, simulação),
+ * mas SEM acesso ao Portão Teste — é para quem gere a escola no dia a dia,
+ * não para quem está fisicamente à entrada a confirmar identidades. Sempre
+ * que uma página verifica `perfil === "admin"`, ver se "gestor" também deve
+ * poder entrar (quase sempre sim, exceto em /portao-teste). */
 export const PERFIS = [
   "aluno",
   "porteiro",
   "professor",
   "dt",
   "coordenador",
+  "gestor",
   "admin",
 ] as const;
 export type Perfil = (typeof PERFIS)[number];

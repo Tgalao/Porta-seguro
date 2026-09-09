@@ -20,7 +20,7 @@ export async function criarTurma(
   _estadoAnterior: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const dados = lerCampos(formData);
@@ -41,7 +41,7 @@ export async function atualizarTurma(
   _estadoAnterior: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   if (!passkeyValida(formData)) {
@@ -69,7 +69,7 @@ export async function atualizarTurma(
  * turma atribuída, em vez de apontar para uma turma que já não existe.
  */
 export async function removerTurma(formData: FormData): Promise<void> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const id = String(formData.get("id") ?? "");

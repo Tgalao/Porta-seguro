@@ -26,7 +26,7 @@ const ATALHOS: AtalhoDoPainel[] = [
     titulo: "Consultar assiduidade",
     descricao: "Presenças, atrasos e faltas das turmas que coordenas.",
     icone: <IconeGrafico />,
-    perfis: ["coordenador", "admin"],
+    perfis: ["coordenador", "gestor", "admin"],
   },
   {
     href: "/horarios?vista=pessoal",
@@ -40,21 +40,21 @@ const ATALHOS: AtalhoDoPainel[] = [
     titulo: "Horário de turmas",
     descricao: "O horário semanal das turmas a que estás associado.",
     icone: <IconeCalendario />,
-    perfis: ["dt", "coordenador", "admin"],
+    perfis: ["dt", "coordenador", "gestor", "admin"],
   },
   {
     href: "/horarios?vista=pessoal",
     titulo: "Horário de professores",
     descricao: "Ver as aulas de qualquer professor, dia a dia.",
     icone: <IconeCalendario />,
-    perfis: ["admin"],
+    perfis: ["gestor", "admin"],
   },
   {
     href: "/admin",
     titulo: "Administração",
     descricao: "Gerir cursos, turmas, horários e contas de alunos.",
     icone: <IconeEngrenagem />,
-    perfis: ["admin"],
+    perfis: ["gestor", "admin"],
   },
   {
     href: "/area-pessoal",
@@ -160,6 +160,7 @@ const ROTULO_PERFIL: Record<Perfil, string> = {
   professor: "Professor",
   dt: "Diretor(a) de turma",
   coordenador: "Coordenador(a)",
+  gestor: "Gestor(a)",
   admin: "Administrador",
 };
 

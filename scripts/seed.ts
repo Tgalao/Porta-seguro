@@ -176,6 +176,9 @@ async function main() {
   const porteiro = await Utilizador.create(
     novoUtilizador("Porteiro Principal", "porteiro@portaoseguro.pt", "porteiro"),
   );
+  // "gestor": as mesmas permissões do admin em toda a administração, mas
+  // sem acesso ao Portão Teste — ver a nota em src/lib/constantes.ts.
+  await Utilizador.create(novoUtilizador("Gestora da Escola", "gestor@portaoseguro.pt", "gestor"));
   // Um coordenador por curso (não o mesmo para os dois) — mais realista, e
   // dá para testar que cada coordenador só vê as turmas do SEU curso.
   const coordenadorAPI = await Utilizador.create(
@@ -411,6 +414,7 @@ async function main() {
   console.log("\nContas para experimentar (todas com a mesma palavra-passe):");
   console.log(`  Palavra-passe: ${PALAVRA_PASSE_SEED}`);
   console.log(`  Admin:       ${admin.email}`);
+  console.log(`  Gestor:      gestor@portaoseguro.pt`);
   console.log(`  Porteiro:    ${porteiro.email}`);
   console.log(`  Coordenador (API): ${coordenadorAPI.email}`);
   console.log(`  Coordenador (MEC): ${coordenadorMEC.email}`);

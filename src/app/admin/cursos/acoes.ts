@@ -20,7 +20,7 @@ export async function criarCurso(
   _estadoAnterior: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const dados = lerCampos(formData);
@@ -41,7 +41,7 @@ export async function atualizarCurso(
   _estadoAnterior: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   if (!passkeyValida(formData)) {
@@ -68,7 +68,7 @@ export async function atualizarCurso(
  * sozinho — evita deixar turmas "órfãs", sem curso.
  */
 export async function removerCurso(formData: FormData): Promise<void> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const id = String(formData.get("id") ?? "");

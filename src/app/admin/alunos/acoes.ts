@@ -25,7 +25,7 @@ export async function criarAluno(
   _estadoAnterior: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const dados = lerCampos(formData);
@@ -52,7 +52,7 @@ export async function atualizarAluno(
   _estadoAnterior: string | undefined,
   formData: FormData,
 ): Promise<string | undefined> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   if (!passkeyValida(formData)) {
@@ -90,7 +90,7 @@ export async function atualizarAluno(
  * existe no sistema" sem confundir os relatórios de assiduidade.
  */
 export async function removerAluno(formData: FormData): Promise<void> {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const id = String(formData.get("id") ?? "");

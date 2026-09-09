@@ -11,7 +11,7 @@ export default async function PaginaTurmas({
 }: {
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
   const { erro } = await searchParams;
 

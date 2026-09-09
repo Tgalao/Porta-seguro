@@ -11,7 +11,7 @@ export default async function PaginaEditarHorario({
 }: {
   params: Promise<{ id: string; horarioId: string }>;
 }) {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
   const { id: turmaId, horarioId } = await params;
 

@@ -22,7 +22,7 @@ export async function consultarAssiduidade(
   alvo: string,
   mes: string,
 ): Promise<ResultadoConsulta> {
-  const sessao = await exigirPerfil(["coordenador", "admin"]);
+  const sessao = await exigirPerfil(["coordenador", "gestor", "admin"]);
 
   if (!alvo) {
     return { ok: false, erro: "Escolhe um aluno, turma ou ano de formação." };

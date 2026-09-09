@@ -19,7 +19,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const sessao = await exigirPerfil(["coordenador", "admin"]);
+  const sessao = await exigirPerfil(["coordenador", "gestor", "admin"]);
 
   const { searchParams } = new URL(request.url);
   const ambito = searchParams.get("ambito") as Ambito | null;

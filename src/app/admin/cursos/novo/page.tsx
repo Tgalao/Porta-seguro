@@ -6,7 +6,7 @@ import { criarCurso } from "../acoes";
 import { CabecalhoSecao } from "@/components/cabecalho-secao";
 
 export default async function PaginaNovoCurso() {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
 
   const coordenadores = await Utilizador.find({ perfil: "coordenador" })

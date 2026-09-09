@@ -14,7 +14,7 @@ import { CabecalhoSecao } from "@/components/cabecalho-secao";
  * portaria, mas não acompanha o histórico de faltas de ninguém.
  */
 export default async function PaginaConsultas() {
-  const sessao = await exigirPerfil(["coordenador", "admin"]);
+  const sessao = await exigirPerfil(["coordenador", "gestor", "admin"]);
   await ligarBaseDados();
 
   // O coordenador só vê as turmas dos cursos que coordena; o admin vê tudo.

@@ -10,7 +10,7 @@ export default async function PaginaNovoHorario({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
   const { id: turmaId } = await params;
 

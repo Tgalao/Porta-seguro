@@ -31,7 +31,7 @@ export async function podeConsultar(
   ambito: Ambito,
   alvo: string,
 ): Promise<boolean> {
-  if (perfil === "admin") return true;
+  if (perfil === "admin" || perfil === "gestor") return true;
 
   const turmas = await turmasDoUtilizador(idUtilizador, perfil);
 

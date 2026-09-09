@@ -11,7 +11,7 @@ export default async function PaginaEditarAluno({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await exigirPerfil(["admin"]);
+  await exigirPerfil(["gestor", "admin"]);
   await ligarBaseDados();
   const { id } = await params;
 
