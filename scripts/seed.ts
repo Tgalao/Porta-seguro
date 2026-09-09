@@ -77,7 +77,20 @@ const DISCIPLINAS_MEC = [
   "Inglês Técnico",
 ];
 
-const NOMES_PROFESSORES = ["Ana Ferreira", "Bruno Costa", "Carla Santos", "Diogo Pereira"];
+// Cada professor dá sempre a MESMA disciplina, em todas as turmas onde ela
+// exista (ex.: quem dá "Inglês Técnico" dá-o tanto nas turmas de API como
+// nas de MEC) — nunca um professor a dar disciplinas diferentes.
+const PROFESSOR_POR_DISCIPLINA: Record<string, string> = {
+  "Programação": "Ana Ferreira",
+  "Base de Dados": "Bruno Costa",
+  "Redes de Computadores": "Carla Santos",
+  "Sistemas Operativos": "Diogo Pereira",
+  "Inglês Técnico": "Elisa Rocha",
+  "Design Gráfico": "Filipe Nogueira",
+  "Edição de Vídeo": "Gabriela Alves",
+  "Fotografia Digital": "Hugo Teixeira",
+  "Animação 2D": "Íris Cunha",
+};
 
 const NOMES_ALUNOS = [
   "Beatriz Almeida",
@@ -163,31 +176,45 @@ async function main() {
   const porteiro = await Utilizador.create(
     novoUtilizador("Porteiro Principal", "porteiro@portaoseguro.pt", "porteiro"),
   );
-  const coordenador = await Utilizador.create(
-    novoUtilizador("Coordenadora Pedagógica", "coordenador@portaoseguro.pt", "coordenador"),
+  // Um coordenador por curso (não o mesmo para os dois) — mais realista, e
+  // dá para testar que cada coordenador só vê as turmas do SEU curso.
+  const coordenadorAPI = await Utilizador.create(
+    novoUtilizador("Coordenador de Curso (API)", "coordenador@portaoseguro.pt", "coordenador"),
+  );
+  const coordenadorMEC = await Utilizador.create(
+    novoUtilizador("Coordenadora de Curso (MEC)", "coordenador.mec@portaoseguro.pt", "coordenador"),
   );
 
   const professores = await Utilizador.insertMany(
-    NOMES_PROFESSORES.map((nome) =>
+    Object.values(PROFESSOR_POR_DISCIPLINA).map((nome) =>
       novoUtilizador(nome, `${slug(nome)}@portaoseguro.pt`, "professor"),
     ),
+  );
+  const idProfessorPorNome = new Map(professores.map((p) => [p.nomeCompleto, p._id]));
+  const idProfessorPorDisciplina = new Map(
+    Object.entries(PROFESSOR_POR_DISCIPLINA).map(([disciplina, nome]) => [
+      disciplina,
+      idProfessorPorNome.get(nome)!,
+    ]),
   );
 
   const cursoAPI = await Curso.create({
     nome: "Técnico de Programação",
     sigla: "API",
     anosDuracao: 3,
-    coordenadorId: coordenador._id,
+    coordenadorId: coordenadorAPI._id,
   });
   const cursoMEC = await Curso.create({
     nome: "Técnico de Multimédia",
     sigla: "MEC",
     anosDuracao: 3,
-    coordenadorId: coordenador._id,
+    coordenadorId: coordenadorMEC._id,
   });
 
-  coordenador.cursosQueCoordena = [cursoAPI._id, cursoMEC._id];
-  await coordenador.save();
+  coordenadorAPI.cursosQueCoordena = [cursoAPI._id];
+  await coordenadorAPI.save();
+  coordenadorMEC.cursosQueCoordena = [cursoMEC._id];
+  await coordenadorMEC.save();
 
   const definicoesTurmas: DefinicaoTurma[] = [
     { nome: "2API", ano: 2, curso: cursoAPI, disciplinas: DISCIPLINAS_API },
@@ -227,7 +254,6 @@ async function main() {
   const turmasCriadas: ITurma[] = [];
   const alunosPorTurma: AlunoResumoSeed[][] = [];
   let contadorAluno = 0;
-  let contadorProfessor = 0;
 
   for (const def of definicoesTurmas) {
     const dt = await Utilizador.create(
@@ -252,15 +278,14 @@ async function main() {
     const horariosDaTurma = [];
     for (let diaSemana = 1; diaSemana <= 5; diaSemana++) {
       for (const [indice, [horaInicio, horaFim]] of BLOCOS_POR_DIA[diaSemana].entries()) {
-        const professor = professores[contadorProfessor % professores.length];
-        contadorProfessor++;
+        const disciplina = def.disciplinas[(diaSemana + indice) % def.disciplinas.length];
         horariosDaTurma.push({
           turmaId: turma._id,
           diaSemana,
           horaInicio,
           horaFim,
-          disciplina: def.disciplinas[(diaSemana + indice) % def.disciplinas.length],
-          professorId: professor._id,
+          disciplina,
+          professorId: idProfessorPorDisciplina.get(disciplina),
           sala: `Sala ${101 + indice}`,
         });
       }
@@ -387,7 +412,8 @@ async function main() {
   console.log(`  Palavra-passe: ${PALAVRA_PASSE_SEED}`);
   console.log(`  Admin:       ${admin.email}`);
   console.log(`  Porteiro:    ${porteiro.email}`);
-  console.log(`  Coordenador: ${coordenador.email}`);
+  console.log(`  Coordenador (API): ${coordenadorAPI.email}`);
+  console.log(`  Coordenador (MEC): ${coordenadorMEC.email}`);
   console.log(`  Aluno (ex.): ${todosAlunos[0].email} (cartão ${todosAlunos[0].numeroCartao})`);
 
   await mongoose.disconnect();

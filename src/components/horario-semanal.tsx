@@ -10,6 +10,9 @@ export interface BlocoHorario {
   disciplina: string;
   sala?: string;
   professor?: string;
+  /** Nome da turma — só usado na vista "por professor" (RF10), onde os
+   * blocos vêm de turmas diferentes e é preciso dizer qual é qual. */
+  turma?: string;
 }
 
 /**
@@ -26,10 +29,13 @@ export interface BlocoHorario {
 export function HorarioSemanal({
   blocos,
   mostrarProfessor = false,
+  mostrarTurma = false,
   diaEmDestaque,
 }: {
   blocos: BlocoHorario[];
   mostrarProfessor?: boolean;
+  /** Mostra a turma de cada bloco — usado na vista "por professor". */
+  mostrarTurma?: boolean;
   /** Dia da semana a destacar (0 = domingo). Usado para marcar "hoje" e
    * para começar já aberto, por ser o dia mais provável de interessar. */
   diaEmDestaque?: number;
@@ -69,10 +75,10 @@ export function HorarioSemanal({
         return (
           <div
             key={dia}
-            className={`overflow-hidden rounded-xl border transition-colors ${
+            className={`overflow-hidden rounded-xl border transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-900/5 ${
               emDestaque
-                ? "border-sky-300 bg-sky-50 dark:border-sky-700 dark:bg-sky-950/40"
-                : "border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40"
+                ? "border-blue-300 bg-blue-50 hover:border-blue-400 dark:border-blue-700 dark:bg-blue-950/40"
+                : "border-slate-200 bg-slate-50/60 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-blue-700"
             }`}
           >
             <button
@@ -84,7 +90,7 @@ export function HorarioSemanal({
               <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                 {NOMES_DIAS_SEMANA[dia]}
                 {emDestaque && (
-                  <span className="rounded-full bg-sky-700 px-2 py-0.5 text-[10px] font-medium text-white">
+                  <span className="rounded-full bg-blue-700 px-2 py-0.5 text-[10px] font-medium text-white">
                     Hoje
                   </span>
                 )}
@@ -99,10 +105,17 @@ export function HorarioSemanal({
               <ul className="flex flex-col gap-1.5 px-3.5 pb-3.5 text-sm">
                 {doDia.map((bloco, indice) => (
                   <li key={indice} className="flex flex-col">
-                    <span className="font-mono text-xs tabular-nums text-sky-700 dark:text-sky-400">
+                    <span className="font-mono text-xs tabular-nums text-blue-700 dark:text-blue-400">
                       {bloco.horaInicio}–{bloco.horaFim}
                     </span>
-                    <span className="font-medium">{bloco.disciplina}</span>
+                    <span className="font-medium">
+                      {bloco.disciplina}
+                      {mostrarTurma && bloco.turma && (
+                        <span className="ml-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                          {bloco.turma}
+                        </span>
+                      )}
+                    </span>
                     {/* Não prefixar com "Sala": o campo já costuma vir escrito
                      * por extenso na base de dados (ex.: "Sala 101"). */}
                     <span className="text-xs text-slate-500 dark:text-slate-400">

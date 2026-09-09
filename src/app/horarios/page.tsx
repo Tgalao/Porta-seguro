@@ -4,7 +4,8 @@ import { exigirPerfil } from "@/lib/permissoes";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { turmasDoUtilizador } from "@/lib/ambito";
 import { Horario, Utilizador } from "@/models";
-import { SeletorTurma, type TurmaComHorario } from "./seletor-turma";
+import type { TurmaComHorario } from "./seletor-turma";
+import { VistaHorario, type ProfessorComHorario } from "./vista-horario";
 import type { BlocoHorario } from "@/components/horario-semanal";
 
 /**
@@ -41,20 +42,35 @@ export default async function PaginaHorarios() {
     .select("nomeCompleto")
     .lean();
   const nomePorId = new Map(professores.map((p) => [p._id.toString(), p.nomeCompleto]));
+  const nomeTurmaPorId = new Map(turmas.map((t) => [t.id, t.nome]));
 
+  // Duas formas de agrupar os MESMOS blocos: por turma (o dia inteiro de
+  // uma turma, várias disciplinas e professores) e por professor (só as
+  // aulas de uma pessoa, em turmas diferentes) — ver VistaHorario.
   const blocosPorTurma = new Map<string, BlocoHorario[]>();
+  const blocosPorProfessor = new Map<string, BlocoHorario[]>();
   for (const bloco of blocos) {
-    const chave = bloco.turmaId.toString();
-    const lista = blocosPorTurma.get(chave) ?? [];
-    lista.push({
+    const chaveTurma = bloco.turmaId.toString();
+    const blocoPronto: BlocoHorario = {
       diaSemana: bloco.diaSemana,
       horaInicio: bloco.horaInicio,
       horaFim: bloco.horaFim,
       disciplina: bloco.disciplina,
       sala: bloco.sala,
       professor: bloco.professorId ? nomePorId.get(bloco.professorId.toString()) : undefined,
-    });
-    blocosPorTurma.set(chave, lista);
+      turma: nomeTurmaPorId.get(chaveTurma),
+    };
+
+    const listaTurma = blocosPorTurma.get(chaveTurma) ?? [];
+    listaTurma.push(blocoPronto);
+    blocosPorTurma.set(chaveTurma, listaTurma);
+
+    if (bloco.professorId) {
+      const chaveProfessor = bloco.professorId.toString();
+      const listaProfessor = blocosPorProfessor.get(chaveProfessor) ?? [];
+      listaProfessor.push(blocoPronto);
+      blocosPorProfessor.set(chaveProfessor, listaProfessor);
+    }
   }
 
   // Junta o horário de cada turma aos dados que o seletor precisa — feito
@@ -67,9 +83,20 @@ export default async function PaginaHorarios() {
     blocos: blocosPorTurma.get(turma.id) ?? [],
   }));
 
+  // "O meu horário": só para quem tem perfil professor, e só as próprias
+  // aulas. "Por professor": só para o admin, que pode escolher qualquer um.
+  const meuHorario =
+    sessao.user.perfil === "professor" ? (blocosPorProfessor.get(sessao.user.id) ?? []) : undefined;
+  const professoresComHorario: ProfessorComHorario[] | undefined =
+    sessao.user.perfil === "admin"
+      ? idsProfessores
+          .map((id) => ({ id, nome: nomePorId.get(id) ?? "—", blocos: blocosPorProfessor.get(id) ?? [] }))
+          .sort((a, b) => a.nome.localeCompare(b.nome, "pt-PT"))
+      : undefined;
+
   return (
     <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="border-b border-slate-200 bg-sky-50 dark:border-slate-800 dark:bg-slate-900">
+      <header className="border-b border-slate-200 bg-blue-50 dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
             <Logo />
@@ -97,7 +124,11 @@ export default async function PaginaHorarios() {
             associarem blocos de horário ou um curso a coordenar.
           </p>
         ) : (
-          <SeletorTurma turmas={turmasComHorario} />
+          <VistaHorario
+            turmas={turmasComHorario}
+            meuHorario={meuHorario}
+            professores={professoresComHorario}
+          />
         )}
       </main>
     </div>
