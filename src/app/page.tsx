@@ -41,30 +41,30 @@ export default async function PaginaInicial() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-16">
-        <section className="flex flex-col gap-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-700 dark:text-blue-400">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-6 py-16 lg:gap-20 lg:py-24">
+        <section className="flex flex-col gap-6">
+          <p className="text-sm font-semibold uppercase tracking-widest text-blue-700 dark:text-blue-400">
             Projeto UFCD 10790
           </p>
-          <h1 className="max-w-2xl text-4xl font-bold leading-tight text-balance sm:text-5xl">
+          <h1 className="max-w-3xl text-4xl font-bold leading-tight text-balance sm:text-5xl lg:text-6xl">
             Quem entra e quem sai da escola, registado no momento.
           </h1>
-          <p className="max-w-xl text-lg text-slate-600 dark:text-slate-300">
-            Cartão ou código QR na portaria. O sistema confirma o horário da
-            turma e decide se a saída pode acontecer, sem papel e sem
-            depender da memória de ninguém.
+          <p className="max-w-xl text-lg text-slate-600 dark:text-slate-300 lg:text-xl">
+            Código QR na portaria. O sistema confirma o horário da turma e
+            decide se a saída pode acontecer, sem papel e sem depender da
+            memória de ninguém.
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
             <Link
               href={autenticado ? "/painel" : "/login"}
-              className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-800"
+              className="rounded-lg bg-blue-700 px-6 py-3 text-base font-medium text-white transition hover:bg-blue-800"
             >
               {autenticado ? "Ir para o painel" : "Iniciar sessão"}
             </Link>
           </div>
         </section>
 
-        <section className="grid gap-5 sm:grid-cols-3">
+        <section className="grid gap-6 sm:grid-cols-3">
           <Destaque titulo="Entradas e saídas">
             Cada passagem fica registada com a hora, o método usado e a decisão
             que o sistema tomou.
@@ -74,8 +74,8 @@ export default async function PaginaInicial() {
             registos reais, nunca escritos à mão.
           </Destaque>
           <Destaque titulo="Código QR no telemóvel">
-            Quem não tiver o cartão à mão gera um código válido durante dois
-            minutos, de uso único.
+            Cada aluno gera, na sua área pessoal, um código válido durante 1
+            minuto, de uso único.
           </Destaque>
         </section>
       </main>
@@ -91,9 +91,9 @@ export default async function PaginaInicial() {
 
 function Destaque({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-      <h2 className="mb-1.5 font-semibold">{titulo}</h2>
-      <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+      <h2 className="mb-2 text-lg font-semibold">{titulo}</h2>
+      <p className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
         {children}
       </p>
     </div>

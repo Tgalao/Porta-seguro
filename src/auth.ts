@@ -30,6 +30,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      // Sem isto, o Google entra logo com a conta já sessão aberta no
+      // telemóvel/browser, sem perguntar qual usar — más notícias quando é
+      // um telemóvel partilhado ou com várias contas Google. `select_account`
+      // obriga a mostrar sempre o ecrã de escolha de conta.
+      authorization: { params: { prompt: "select_account" } },
     }),
   ],
 

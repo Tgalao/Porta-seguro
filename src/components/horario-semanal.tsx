@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NOMES_DIAS_SEMANA } from "@/lib/datas";
+
+/** Mesmo ponto de corte do `lg:` do Tailwind — é a partir daqui que
+ * `tamanhoGrande` também começa a mostrar todos os dias já abertos. */
+const MEDIA_QUERY_PC = "(min-width: 1024px)";
 
 export interface BlocoHorario {
   diaSemana: number;
@@ -45,16 +49,38 @@ export function HorarioSemanal({
    * espaço no PC para o mostrar mais confortável. */
   tamanhoGrande?: boolean;
 }) {
+  // Só os dias que têm mesmo aulas, pela ordem da semana.
+  const diasComAulas = [...new Set(blocos.map((b) => b.diaSemana))].sort((a, b) => a - b);
+
   const [diasAbertos, setDiasAbertos] = useState<ReadonlySet<number>>(
     () => new Set(diaEmDestaque !== undefined ? [diaEmDestaque] : []),
   );
 
+  // No PC (só quando `tamanhoGrande`), mostra logo todos os dias abertos —
+  // há espaço de sobra e poupa o clique. No telemóvel mantém-se fechado
+  // por omissão, como sempre foi: aí a informação toda de uma vez não cabe.
+  // Corre no cliente (media query real, não CSS) porque a decisão de
+  // ABRIR ou não é lógica de estado, não só de aparência.
+  useEffect(() => {
+    if (!tamanhoGrande) return;
+
+    const consulta = window.matchMedia(MEDIA_QUERY_PC);
+    function aplicar(ehPC: boolean) {
+      setDiasAbertos(ehPC ? new Set(diasComAulas) : new Set(diaEmDestaque !== undefined ? [diaEmDestaque] : []));
+    }
+    function aoMudar(evento: MediaQueryListEvent) {
+      aplicar(evento.matches);
+    }
+
+    aplicar(consulta.matches);
+    consulta.addEventListener("change", aoMudar);
+    return () => consulta.removeEventListener("change", aoMudar);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- diasComAulas é derivado de `blocos`, incluí-lo repetia o efeito sempre que a referência do array mudasse sem os dias mudarem de facto
+  }, [tamanhoGrande, diaEmDestaque]);
+
   if (blocos.length === 0) {
     return <p className="text-sm text-slate-500 dark:text-slate-400">Ainda sem horário definido.</p>;
   }
-
-  // Só os dias que têm mesmo aulas, pela ordem da semana.
-  const diasComAulas = [...new Set(blocos.map((b) => b.diaSemana))].sort((a, b) => a - b);
 
   function alternar(dia: number) {
     setDiasAbertos((atuais) => {
