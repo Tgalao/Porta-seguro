@@ -29,5 +29,9 @@ declare module "@auth/core/jwt" {
   interface JWT {
     idUtilizador?: string;
     perfil?: Perfil;
+    /** Instante (em milissegundos) a partir do qual esta sessão deixa de
+     * valer, além do limite geral de 8 horas. Só as contas admin e gestor
+     * o têm preenchido: são expulsas à meia-noite (ver src/auth.ts). */
+    expiraEm?: number;
   }
 }
