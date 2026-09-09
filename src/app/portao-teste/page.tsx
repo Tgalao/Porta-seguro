@@ -5,7 +5,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { limitesDoDiaEmLisboa, formatarHora } from "@/lib/datas";
 import { Registo, Utilizador } from "@/models";
 import { PainelPortao } from "./painel-portao";
-import type { LinhaRegisto } from "./acoes";
+import type { LinhaRegisto } from "@/lib/movimento";
 
 /**
  * Portão Teste (UC01): leitura de código QR na portaria, com semáforo e
@@ -36,6 +36,7 @@ export default async function PaginaPortaoTeste() {
     alunoNome: nomesPorId.get(registo.alunoId.toString()) ?? "Aluno desconhecido",
     tipo: registo.tipo,
     estado: registo.estado,
+    metodo: registo.metodo,
     horaFormatada: formatarHora(registo.dataHora),
   }));
 

@@ -25,6 +25,21 @@ export default async function PaginaAdmin() {
           <CartaoSeccao href="/admin/turmas" titulo="Turmas" total={totalTurmas} icone={<IconeTurmas />} />
           <CartaoSeccao href="/admin/alunos" titulo="Alunos" total={totalAlunos} icone={<IconeAlunos />} />
         </div>
+
+        <Link
+          href="/admin/simulacao"
+          className="group mt-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-lg hover:shadow-teal-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-700"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 transition-colors group-hover:bg-teal-700 group-hover:text-white dark:bg-teal-950/50 dark:text-teal-400">
+            <IconeSimulacao />
+          </span>
+          <div>
+            <p className="font-semibold">Simulação de data/hora</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Demonstrar entradas e saídas noutro dia ou hora, para a defesa oral
+            </p>
+          </div>
+        </Link>
       </main>
     </div>
   );
@@ -77,6 +92,15 @@ function IconeTurmas() {
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden>
       <rect x="3.5" y="5" width="17" height="15" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
       <path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconeSimulacao() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M12 7.5V12l3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

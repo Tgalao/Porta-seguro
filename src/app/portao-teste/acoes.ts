@@ -14,11 +14,13 @@
  *      `fotoUrl` foi acrescentado ao modelo Utilizador logo na Fase 1, para
  *      o porteiro poder comparar com a pessoa à frente. Essa confirmação é
  *      dada a `confirmarIdentidadeQR`.
- *   2. Depois de a identidade confirmada, `processarIdentificacao` aplica
- *      as regras da Fase 3. Entradas e saídas autorizadas ficam logo
- *      gravadas. Só a saída NÃO autorizada fica pendente — nesse caso não
- *      se grava nada ainda, porque o 2.º fluxograma do UC01 exige primeiro
- *      que o porteiro contacte os pais.
+ *   2. Depois de a identidade confirmada, `processarMovimento` (lógica
+ *      partilhada com a simulação do admin — ver `src/lib/movimento.ts`)
+ *      aplica as regras da Fase 3, sempre com a hora verdadeira do momento
+ *      da leitura. Entradas e saídas autorizadas ficam logo gravadas. Só a
+ *      saída NÃO autorizada fica pendente — nesse caso não se grava nada
+ *      ainda, porque o 2.º fluxograma do UC01 exige primeiro que o
+ *      porteiro contacte os pais.
  *   3. `confirmarSaidaComPais` grava o resultado desse contacto telefónico
  *      (o programa nunca liga para ninguém sozinho — RF04).
  *
@@ -31,253 +33,20 @@
 
 import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
-import { formatarHora, diaDaSemanaEmLisboa } from "@/lib/datas";
 import { Utilizador, Turma, Horario, Registo, Ocorrencia, TokenQR } from "@/models";
-import type { IUtilizador } from "@/models";
+import { validarTokenQR, proximoTipoRegisto } from "@/lib/regras";
 import {
-  decidirEntrada,
-  decidirSaida,
-  validarTokenQR,
-  calcularEstadoPorta,
-  proximoTipoRegisto,
-  type ResultadoEstadoPorta,
-} from "@/lib/regras";
-import { notificarMovimento } from "@/lib/notificacoes";
-import type { BlocoHorario } from "@/components/horario-semanal";
-import type { IHorario } from "@/models";
-import type { TipoRegisto, EstadoRegisto } from "@/lib/constantes";
+  processarMovimento,
+  confirmarSaidaComPais as confirmarSaidaComPaisPartilhado,
+  resumoDoAluno,
+  type AlunoResumo,
+  type LinhaRegisto,
+  type ResultadoMovimento,
+  type ResultadoConfirmacao,
+} from "@/lib/movimento";
 
-export interface AlunoResumo {
-  id: string;
-  nome: string;
-  fotoUrl?: string;
-  numeroAluno?: number;
-  turma?: string;
-  /**
-   * Blocos de HOJE e estado da porta, para o porteiro perceber num relance
-   * se aquela pessoa devia estar ali àquela hora. Não inclui assiduidade:
-   * o histórico de faltas não é da conta do porteiro — o aluno consulta o
-   * seu na área pessoal.
-   *
-   * O "hoje" é decidido aqui, no servidor, com o dia da semana em Lisboa —
-   * no browser, `new Date().getDay()` daria o dia do fuso do próprio
-   * computador, que pode não ser o nosso.
-   */
-  blocosHoje?: BlocoHorario[];
-  estadoPorta?: ResultadoEstadoPorta;
-}
-
-/** Uma linha da tabela "registos de hoje". */
-export interface LinhaRegisto {
-  id: string;
-  alunoNome: string;
-  tipo: TipoRegisto;
-  estado: EstadoRegisto;
-  horaFormatada: string;
-}
-
-export type ResultadoIdentificacao =
-  | { ok: false; erro: string }
-  | {
-      ok: true;
-      pendente: false;
-      aluno: AlunoResumo;
-      autorizado: boolean;
-      motivo: string;
-      linha: LinhaRegisto;
-    }
-  | {
-      ok: true;
-      pendente: true;
-      aluno: AlunoResumo;
-      motivo: string;
-      horarioId?: string;
-      momentoISO: string;
-    };
-
-type AlunoParaMovimento = Pick<
-  IUtilizador,
-  | "_id"
-  | "nomeCompleto"
-  | "email"
-  | "fotoUrl"
-  | "numeroAluno"
-  | "turmaId"
-  | "maiorIdade"
-  | "autorizacaoPais"
-  | "suspenso"
->;
-
-/**
- * Qualquer movimento registado torna obsoleto um código QR que a pessoa
- * ainda tenha por usar: refletia uma intenção de entrada/saída que já
- * deixou de fazer sentido depois deste movimento.
- *
- * Mesma ideia (e quase o mesmo código) de `gerarNovoTokenQR`: gerar um
- * código novo já invalidava os anteriores; isto invalida-os também quando
- * o movimento acaba por se concretizar.
- */
-async function invalidarTokenQRPendente(alunoId: IUtilizador["_id"], momento: Date): Promise<void> {
-  await TokenQR.updateMany({ alunoId, usado: false }, { usado: true, usadoEm: momento });
-}
-
-function resumoDoAluno(
-  aluno: AlunoParaMovimento,
-  nomeTurma?: string,
-  horarios?: IHorario[],
-  momento?: Date,
-): AlunoResumo {
-  return {
-    id: aluno._id.toString(),
-    nome: aluno.nomeCompleto,
-    fotoUrl: aluno.fotoUrl,
-    numeroAluno: aluno.numeroAluno,
-    turma: nomeTurma,
-    blocosHoje:
-      horarios && momento
-        ? horarios
-            .filter((h) => h.diaSemana === diaDaSemanaEmLisboa(momento))
-            .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
-            .map((h) => ({
-              diaSemana: h.diaSemana,
-              horaInicio: h.horaInicio,
-              horaFim: h.horaFim,
-              disciplina: h.disciplina,
-              sala: h.sala,
-            }))
-        : undefined,
-    estadoPorta:
-      horarios && momento ? calcularEstadoPorta(horarios, momento) : undefined,
-  };
-}
-
-/**
- * Aplica as regras da Fase 3 depois de o aluno já estar identificado (QR
- * lido + identidade confirmada pelo porteiro).
- */
-async function processarIdentificacao(
-  aluno: AlunoParaMovimento,
-  registadoPorId: string,
-): Promise<ResultadoIdentificacao> {
-  const turma = aluno.turmaId ? await Turma.findById(aluno.turmaId).lean() : null;
-  const horarios = aluno.turmaId
-    ? await Horario.find({ turmaId: aluno.turmaId }).lean()
-    : [];
-
-  const momento = new Date();
-  const resumo = resumoDoAluno(aluno, turma?.nome, horarios, momento);
-
-  // O tipo de movimento não é escolhido pelo porteiro: alterna com o
-  // último registo do aluno (mesma regra usada para bloquear a direção do
-  // QR na geração — ver `proximoTipoRegisto`).
-  const ultimoRegisto = await Registo.findOne({ alunoId: aluno._id })
-    .sort({ dataHora: -1 })
-    .lean();
-  const tipo = proximoTipoRegisto(ultimoRegisto?.tipo);
-
-  if (tipo === "entrada") {
-    const decisao = decidirEntrada({ suspenso: aluno.suspenso }, horarios, momento);
-
-    const registo = await Registo.create({
-      alunoId: aluno._id,
-      dataHora: momento,
-      tipo: "entrada",
-      metodo: "qr",
-      estado: decisao.autorizado ? "autorizado" : "nao_autorizado",
-      motivo: decisao.motivo,
-      horarioId: decisao.horarioId,
-      registadoPorId,
-    });
-
-    if (decisao.criarOcorrencia) {
-      await Ocorrencia.create({
-        alunoId: aluno._id,
-        tipo: "entrada_suspenso",
-        descricao: "Tentativa de entrada de aluno suspenso.",
-        registoId: registo._id,
-      });
-    }
-
-    await Promise.all([
-      notificarMovimento(
-        aluno.nomeCompleto,
-        aluno.email,
-        "entrada",
-        decisao.autorizado,
-        decisao.motivo,
-        momento,
-      ),
-      invalidarTokenQRPendente(aluno._id, momento),
-    ]);
-
-    return {
-      ok: true,
-      pendente: false,
-      aluno: resumo,
-      autorizado: decisao.autorizado,
-      motivo: decisao.motivo,
-      linha: {
-        id: registo._id.toString(),
-        alunoNome: resumo.nome,
-        tipo: "entrada",
-        estado: registo.estado,
-        horaFormatada: formatarHora(momento),
-      },
-    };
-  }
-
-  const decisao = decidirSaida(
-    { maiorIdade: aluno.maiorIdade, autorizacaoPais: aluno.autorizacaoPais },
-    horarios,
-    momento,
-  );
-
-  if (!decisao.autorizado) {
-    return {
-      ok: true,
-      pendente: true,
-      aluno: resumo,
-      motivo: decisao.motivo,
-      horarioId: decisao.horarioId?.toString(),
-      momentoISO: momento.toISOString(),
-    };
-  }
-
-  const registo = await Registo.create({
-    alunoId: aluno._id,
-    dataHora: momento,
-    tipo: "saida",
-    metodo: "qr",
-    estado: "autorizado",
-    motivo: decisao.motivo,
-    horarioId: decisao.horarioId,
-    registadoPorId,
-  });
-
-  await Promise.all([
-    notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", true, decisao.motivo, momento),
-    invalidarTokenQRPendente(aluno._id, momento),
-  ]);
-
-  return {
-    ok: true,
-    pendente: false,
-    aluno: resumo,
-    autorizado: true,
-    motivo: decisao.motivo,
-    linha: {
-      id: registo._id.toString(),
-      alunoNome: resumo.nome,
-      tipo: "saida",
-      estado: "autorizado",
-      horaFormatada: formatarHora(momento),
-    },
-  };
-}
-
-export type ResultadoConfirmacao =
-  | { ok: false; erro: string }
-  | { ok: true; autorizado: boolean; linha: LinhaRegisto };
+export type { AlunoResumo, LinhaRegisto, ResultadoConfirmacao };
+export type ResultadoIdentificacao = ResultadoMovimento;
 
 /** Grava a saída pendente depois de o porteiro contactar os pais (RF04). */
 export async function confirmarSaidaComPais(
@@ -287,46 +56,14 @@ export async function confirmarSaidaComPais(
   paisAutorizaram: boolean,
 ): Promise<ResultadoConfirmacao> {
   const sessao = await exigirPerfil(["porteiro", "admin"]);
-  await ligarBaseDados();
-
-  const aluno = await Utilizador.findById(alunoId).lean();
-  if (!aluno) {
-    return { ok: false, erro: "Aluno já não existe." };
-  }
-
-  const momento = new Date(momentoISO);
-  const motivo = paisAutorizaram
-    ? "Saída fora do horário confirmada por telefone com os pais."
-    : "Pais contactados; saída não autorizada.";
-
-  const registo = await Registo.create({
-    alunoId: aluno._id,
-    dataHora: momento,
-    tipo: "saida",
-    metodo: "qr",
-    estado: paisAutorizaram ? "confirmado_pais" : "nao_autorizado",
-    motivo,
+  return confirmarSaidaComPaisPartilhado(
+    alunoId,
     horarioId,
-    registadoPorId: sessao.user.id,
-    confirmacaoPais: paisAutorizaram,
-  });
-
-  await Promise.all([
-    notificarMovimento(aluno.nomeCompleto, aluno.email, "saida", paisAutorizaram, motivo, momento),
-    invalidarTokenQRPendente(aluno._id, momento),
-  ]);
-
-  return {
-    ok: true,
-    autorizado: paisAutorizaram,
-    linha: {
-      id: registo._id.toString(),
-      alunoNome: aluno.nomeCompleto,
-      tipo: "saida",
-      estado: registo.estado,
-      horaFormatada: formatarHora(momento),
-    },
-  };
+    momentoISO,
+    "qr",
+    paisAutorizaram,
+    sessao.user.id,
+  );
 }
 
 export type ResultadoLeituraQR =
@@ -443,5 +180,5 @@ export async function confirmarIdentidadeQR(
     };
   }
 
-  return processarIdentificacao(aluno, sessao.user.id);
+  return processarMovimento(aluno, sessao.user.id, "qr", new Date());
 }

@@ -32,7 +32,7 @@ export const TIPOS_REGISTO = ["entrada", "saida"] as const;
 export type TipoRegisto = (typeof TIPOS_REGISTO)[number];
 
 /** Forma como o aluno foi identificado. */
-export const METODOS_REGISTO = ["cartao", "qr"] as const;
+export const METODOS_REGISTO = ["cartao", "qr", "simulacao"] as const;
 export type MetodoRegisto = (typeof METODOS_REGISTO)[number];
 
 /** Resultado da decisão tomada sobre um registo de entrada/saída. */

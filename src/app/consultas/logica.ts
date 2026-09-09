@@ -120,9 +120,13 @@ export async function calcularResultadoConsulta(
     const horarios = aluno.turmaId
       ? await Horario.find({ turmaId: aluno.turmaId }).select("diaSemana").lean()
       : [];
+    // `metodo: "simulacao"` fica de fora: são registos de demonstração
+    // criados pelo admin em `/admin/simulacao`, não movimentos reais — não
+    // podem contar para a assiduidade de ninguém.
     const registos = await Registo.find({
       alunoId: aluno._id,
       dataHora: { $gte: periodo.inicio, $lt: periodo.fim },
+      metodo: { $ne: "simulacao" },
     })
       .select("tipo estado dataHora horarioId")
       .lean();
@@ -183,6 +187,7 @@ export async function calcularResultadoConsulta(
   const registosTodos = await Registo.find({
     alunoId: { $in: alunos.map((aluno) => aluno._id) },
     dataHora: { $gte: periodo.inicio, $lt: periodo.fim },
+    metodo: { $ne: "simulacao" },
   })
     .select("alunoId tipo estado dataHora horarioId")
     .lean();

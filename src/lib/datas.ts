@@ -200,6 +200,33 @@ export function limitesDoMesEmLisboa(ano: number, mes: number): { inicio: Date; 
   return { inicio, fim };
 }
 
+/**
+ * Converte uma data/hora "de parede" em Lisboa (ano, mês, dia, hora, minuto
+ * — os campos que saem de um `<input type="datetime-local">`) no instante
+ * UTC correspondente.
+ *
+ * Usada pela ferramenta de simulação do admin (`/admin/simulacao`): o
+ * formulário pede "que dia e hora simular" em Lisboa, não no fuso do
+ * computador de quem está a testar, por isso não basta um `new Date(...)`
+ * direto (esse lê a hora no fuso do processo Node, que no Vercel é sempre
+ * UTC). Mesma técnica de correção por deslocamento que `limitesDoDiaEmLisboa`
+ * já usa para a meia-noite — generalizada aqui para qualquer hora do dia e a
+ * cuidar também da mudança de dia civil, não só da hora.
+ */
+export function horaLisboaParaUtc(
+  ano: number,
+  mes: number,
+  dia: number,
+  horas: number,
+  minutos: number,
+): Date {
+  const candidato = new Date(Date.UTC(ano, mes - 1, dia, horas, minutos, 0));
+  const p = partesEmLisboa(candidato);
+  const candidatoComoUtc = Date.UTC(p.ano, p.mes - 1, p.dia, p.horas, p.minutos);
+  const desejadoComoUtc = Date.UTC(ano, mes - 1, dia, horas, minutos);
+  return new Date(candidato.getTime() - (candidatoComoUtc - desejadoComoUtc));
+}
+
 /** Só a hora. Exemplo: "14:30". */
 export function formatarHora(data: Date): string {
   return new Intl.DateTimeFormat("pt-PT", {

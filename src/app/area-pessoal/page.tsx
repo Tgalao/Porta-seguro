@@ -58,9 +58,13 @@ export default async function PaginaAreaPessoal() {
     aluno?.turmaId
       ? Horario.find({ turmaId: aluno.turmaId }).sort({ diaSemana: 1, horaInicio: 1 }).lean()
       : [],
+    // `metodo: "simulacao"` fica de fora: são registos de demonstração da
+    // ferramenta do admin, não movimentos reais — nunca podem aparecer como
+    // presença/falta real do aluno.
     Registo.find({
       alunoId: sessao.user.id,
       dataHora: { $gte: periodo.inicio, $lt: periodo.fim },
+      metodo: { $ne: "simulacao" },
     })
       .select("tipo estado dataHora horarioId")
       .lean(),
