@@ -68,7 +68,13 @@ export async function atualizarAluno(
   const novaPalavraPasse = String(formData.get("palavraPasse") ?? "");
 
   try {
-    const aluno = await Utilizador.findById(id);
+    // `perfil: "aluno"` no filtro é uma verificação de segurança, não uma
+    // otimização: sem ele, este formulário aceitava o id de QUALQUER
+    // utilizador — incluindo o do admin — e o campo "palavra-passe" abaixo
+    // deixava um gestor mudar a password do admin e entrar como ele,
+    // contornando a única coisa que o gestor não pode fazer (o Portão
+    // Teste). O id vem do browser e nunca é de confiança sozinho.
+    const aluno = await Utilizador.findOne({ _id: id, perfil: "aluno" });
     if (!aluno) return "Aluno não encontrado.";
 
     Object.assign(aluno, dados);
@@ -99,12 +105,20 @@ export async function removerAluno(formData: FormData): Promise<void> {
     redirect(`/admin/alunos?erro=${encodeURIComponent(ERRO_PASSKEY)}`);
   }
 
+  // Apaga primeiro o utilizador, com `perfil: "aluno"` no filtro (mesma
+  // razão de segurança que em `atualizarAluno`: sem isto, o id vindo do
+  // browser dava para apagar o admin). Só se apagou mesmo um aluno é que
+  // faz sentido apagar o histórico dele.
+  const aluno = await Utilizador.findOneAndDelete({ _id: id, perfil: "aluno" });
+  if (!aluno) {
+    redirect(`/admin/alunos?erro=${encodeURIComponent("Aluno não encontrado.")}`);
+  }
+
   await Promise.all([
-    Registo.deleteMany({ alunoId: id }),
-    Ocorrencia.deleteMany({ alunoId: id }),
-    TokenQR.deleteMany({ alunoId: id }),
+    Registo.deleteMany({ alunoId: aluno._id }),
+    Ocorrencia.deleteMany({ alunoId: aluno._id }),
+    TokenQR.deleteMany({ alunoId: aluno._id }),
   ]);
-  await Utilizador.findByIdAndDelete(id);
 
   redirect("/admin/alunos");
 }
