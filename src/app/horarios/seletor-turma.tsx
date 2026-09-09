@@ -55,7 +55,10 @@ export function SeletorTurma({ turmas }: { turmas: TurmaComHorario[] }) {
               ({selecionada.ano}.º ano)
             </span>
           </h2>
-          <HorarioSemanal blocos={selecionada.blocos} mostrarProfessor />
+          {/* `key` força a recriar o acordeão do zero ao trocar de turma —
+           * sem isto, um dia deixado aberto numa turma continuava "aberto"
+           * ao mudar para outra, o que confundia mais do que ajudava. */}
+          <HorarioSemanal key={selecionada.id} blocos={selecionada.blocos} mostrarProfessor />
         </section>
       )}
     </div>

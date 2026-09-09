@@ -25,12 +25,20 @@ export function VistaHorario({
   turmas,
   meuHorario,
   professores,
+  vistaInicial,
 }: {
   turmas: TurmaComHorario[];
   meuHorario?: BlocoHorario[];
   professores?: ProfessorComHorario[];
+  /** Que aba mostrar ao abrir a página — vem do link que trouxe a pessoa
+   * até aqui (o Painel tem um atalho para cada vista, ver painel/page.tsx),
+   * para não obrigar a clicar outra vez depois de já ter escolhido no
+   * Painel qual delas queria ver. */
+  vistaInicial?: "turma" | "pessoal";
 }) {
-  const [vista, setVista] = useState<"turma" | "pessoal">(meuHorario ? "pessoal" : "turma");
+  const [vista, setVista] = useState<"turma" | "pessoal">(
+    vistaInicial ?? (meuHorario ? "pessoal" : "turma"),
+  );
   const [idProfessorSelecionado, setIdProfessorSelecionado] = useState(professores?.[0]?.id ?? "");
 
   if (!meuHorario && !professores) {
@@ -86,7 +94,11 @@ export function VistaHorario({
           {professorSelecionado && (
             <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
               <h2 className="mb-4 font-semibold">{professorSelecionado.nome}</h2>
-              <HorarioSemanal blocos={professorSelecionado.blocos} mostrarTurma />
+              <HorarioSemanal
+                key={professorSelecionado.id}
+                blocos={professorSelecionado.blocos}
+                mostrarTurma
+              />
             </section>
           )}
         </div>

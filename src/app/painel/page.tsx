@@ -29,11 +29,25 @@ const ATALHOS: AtalhoDoPainel[] = [
     perfis: ["coordenador", "admin"],
   },
   {
-    href: "/horarios",
+    href: "/horarios?vista=pessoal",
+    titulo: "O meu horário",
+    descricao: "As tuas próprias aulas, dia a dia, nas turmas onde lecionas.",
+    icone: <IconeCalendario />,
+    perfis: ["professor"],
+  },
+  {
+    href: "/horarios?vista=turma",
     titulo: "Horário de turmas",
     descricao: "O horário semanal das turmas a que estás associado.",
     icone: <IconeCalendario />,
     perfis: ["professor", "dt", "coordenador", "admin"],
+  },
+  {
+    href: "/horarios?vista=pessoal",
+    titulo: "Horário de professores",
+    descricao: "Ver as aulas de qualquer professor, dia a dia.",
+    icone: <IconeCalendario />,
+    perfis: ["admin"],
   },
   {
     href: "/admin",

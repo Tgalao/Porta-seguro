@@ -18,9 +18,15 @@ import type { BlocoHorario } from "@/components/horario-semanal";
  * Não mostra assiduidade nenhuma — isso é o ecrã /consultas, e só o
  * coordenador e o admin lá chegam. Aqui é mesmo só o horário.
  */
-export default async function PaginaHorarios() {
+export default async function PaginaHorarios({
+  searchParams,
+}: {
+  searchParams: Promise<{ vista?: string }>;
+}) {
   const sessao = await exigirPerfil(["professor", "dt", "coordenador", "admin"]);
   await ligarBaseDados();
+  const { vista } = await searchParams;
+  const vistaInicial = vista === "pessoal" ? "pessoal" : vista === "turma" ? "turma" : undefined;
 
   const turmas = await turmasDoUtilizador(sessao.user.id, sessao.user.perfil);
 
@@ -128,6 +134,7 @@ export default async function PaginaHorarios() {
             turmas={turmasComHorario}
             meuHorario={meuHorario}
             professores={professoresComHorario}
+            vistaInicial={vistaInicial}
           />
         )}
       </main>
