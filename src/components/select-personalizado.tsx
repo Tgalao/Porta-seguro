@@ -65,7 +65,7 @@ export function SelectPersonalizado({
         aria-expanded={aberto}
         aria-labelledby={idBotao}
         onClick={() => setAberto((atual) => !atual)}
-        className="flex items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-left transition hover:border-sky-400 focus:border-sky-600 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-600"
+        className="flex items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-left transition hover:border-blue-400 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-600"
       >
         <span>{selecionada?.rotulo ?? "Selecionar"}</span>
         <IconeChevron aberto={aberto} />
@@ -91,8 +91,8 @@ export function SelectPersonalizado({
                   }}
                   className={`block w-full rounded-lg px-3 py-2 text-left transition ${
                     ativa
-                      ? "bg-sky-700 text-white"
-                      : "text-slate-700 hover:bg-sky-50 dark:text-slate-300 dark:hover:bg-sky-950/40"
+                      ? "bg-blue-700 text-white"
+                      : "text-slate-700 hover:bg-blue-50 dark:text-slate-300 dark:hover:bg-blue-950/40"
                   }`}
                 >
                   {opcao.rotulo}

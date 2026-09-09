@@ -34,7 +34,7 @@ export default async function PaginaAlunos({
         acao={
           <Link
             href="/admin/alunos/novo"
-            className="rounded-lg bg-sky-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-sky-800"
+            className="rounded-lg bg-blue-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-800"
           >
             + Novo aluno
           </Link>
@@ -82,7 +82,7 @@ export default async function PaginaAlunos({
                   <td className="px-5 py-3 text-right whitespace-nowrap">
                     <Link
                       href={`/admin/alunos/${aluno._id}`}
-                      className="font-medium text-sky-700 hover:underline dark:text-sky-400"
+                      className="font-medium text-blue-700 hover:underline dark:text-blue-400"
                     >
                       Editar
                     </Link>{" "}

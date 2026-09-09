@@ -86,7 +86,7 @@ export function GeradorQR({
             height={240}
             className="rounded-xl border border-slate-200 p-2 dark:border-slate-700"
           />
-          <p className="rounded-full bg-sky-50 px-3 py-1 font-mono text-sm tabular-nums text-sky-800 dark:bg-sky-950/50 dark:text-sky-300">
+          <p className="rounded-full bg-blue-50 px-3 py-1 font-mono text-sm tabular-nums text-blue-800 dark:bg-blue-950/50 dark:text-blue-300">
             Válido por mais {Math.floor(segundos / 60)}:{String(segundos % 60).padStart(2, "0")}
           </p>
         </>
@@ -107,7 +107,7 @@ export function GeradorQR({
           type="button"
           onClick={gerar}
           disabled={aGerar}
-          className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800 disabled:opacity-50"
+          className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:opacity-50"
         >
           {aGerar ? "A gerar..." : token ? "Gerar novo código" : "Gerar código QR"}
         </button>
@@ -129,7 +129,7 @@ function RotuloDirecao({ tipo }: { tipo: TipoRegisto }) {
     <span
       className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
         tipo === "entrada"
-          ? "bg-sky-700 text-white"
+          ? "bg-blue-700 text-white"
           : "bg-slate-700 text-white dark:bg-slate-600"
       }`}
     >

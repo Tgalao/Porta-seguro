@@ -20,7 +20,7 @@ export default async function PaginaInicial() {
 
   return (
     <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-sky-50/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-blue-50/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
             <Logo className="h-10 w-10" />
@@ -34,7 +34,7 @@ export default async function PaginaInicial() {
 
           <Link
             href={autenticado ? "/painel" : "/login"}
-            className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800"
+            className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800"
           >
             {autenticado ? "Ir para o painel" : "Entrar"}
           </Link>
@@ -43,7 +43,7 @@ export default async function PaginaInicial() {
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-16">
         <section className="flex flex-col gap-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-sky-700 dark:text-sky-400">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-700 dark:text-blue-400">
             Projeto UFCD 10790
           </p>
           <h1 className="max-w-2xl text-4xl font-bold leading-tight text-balance sm:text-5xl">
@@ -57,7 +57,7 @@ export default async function PaginaInicial() {
           <div className="mt-2 flex flex-wrap gap-3">
             <Link
               href={autenticado ? "/painel" : "/login"}
-              className="rounded-lg bg-sky-700 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-sky-800"
+              className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-800"
             >
               {autenticado ? "Ir para o painel" : "Iniciar sessão"}
             </Link>

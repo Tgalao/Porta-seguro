@@ -23,7 +23,7 @@ export function CabecalhoSecao({
   acao?: React.ReactNode;
 }) {
   return (
-    <header className="border-b border-slate-200 bg-sky-50 dark:border-slate-800 dark:bg-slate-900">
+    <header className="border-b border-slate-200 bg-blue-50 dark:border-slate-800 dark:bg-slate-900">
       <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-3 px-6 py-3">
         <div className="flex items-center gap-3">
           <Logo />

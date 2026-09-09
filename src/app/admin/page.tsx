@@ -28,9 +28,9 @@ export default async function PaginaAdmin() {
 
         <Link
           href="/admin/simulacao"
-          className="group mt-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg hover:shadow-sky-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-700"
+          className="group mt-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700 transition-colors group-hover:bg-sky-700 group-hover:text-white dark:bg-sky-950/50 dark:text-sky-400">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-700 group-hover:text-white dark:bg-blue-950/50 dark:text-blue-400">
             <IconeSimulacao />
           </span>
           <div>
@@ -59,9 +59,9 @@ function CartaoSeccao({
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg hover:shadow-sky-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-700"
+      className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 text-sky-700 transition-colors group-hover:bg-sky-700 group-hover:text-white dark:bg-sky-950/50 dark:text-sky-400">
+      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-700 group-hover:text-white dark:bg-blue-950/50 dark:text-blue-400">
         {icone}
       </span>
       <div>

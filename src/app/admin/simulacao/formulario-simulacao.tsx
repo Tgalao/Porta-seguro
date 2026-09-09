@@ -153,7 +153,7 @@ export function FormularioSimulacao({ alunos }: { alunos: AlunoParaSeletor[] }) 
         <button
           type="submit"
           disabled={aEnviar || !alunoId}
-          className="self-start rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800 disabled:opacity-50"
+          className="self-start rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:opacity-50"
         >
           {aEnviar ? "A simular..." : "Simular passagem"}
         </button>

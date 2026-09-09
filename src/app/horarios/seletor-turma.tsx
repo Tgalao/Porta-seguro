@@ -37,8 +37,8 @@ export function SeletorTurma({ turmas }: { turmas: TurmaComHorario[] }) {
               onClick={() => setIdSelecionado(turma.id)}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                 ativa
-                  ? "border-sky-700 bg-sky-700 text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-sky-600 dark:hover:text-sky-400"
+                  ? "border-blue-700 bg-blue-700 text-white"
+                  : "border-slate-300 bg-white text-slate-700 hover:border-blue-400 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-600 dark:hover:text-blue-400"
               }`}
             >
               {turma.nome}
