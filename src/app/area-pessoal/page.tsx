@@ -83,12 +83,26 @@ export default async function PaginaAreaPessoal() {
     periodo,
   );
 
+  // Nome do professor de cada bloco — o aluno vê quem dá cada aula, mas só
+  // isso: nenhuma outra informação sobre o professor, nem em que outras
+  // turmas dá aulas.
+  const idsProfessores = [
+    ...new Set(
+      horarios.map((h) => h.professorId?.toString()).filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const professores = await Utilizador.find({ _id: { $in: idsProfessores } })
+    .select("nomeCompleto")
+    .lean();
+  const nomeProfessorPorId = new Map(professores.map((p) => [p._id.toString(), p.nomeCompleto]));
+
   const blocos: BlocoHorario[] = horarios.map((h) => ({
     diaSemana: h.diaSemana,
     horaInicio: h.horaInicio,
     horaFim: h.horaFim,
     disciplina: h.disciplina,
     sala: h.sala,
+    professor: h.professorId ? nomeProfessorPorId.get(h.professorId.toString()) : undefined,
   }));
 
   const diasAssinalar: LinhaDiaAssinalar[] = assiduidade.dias
@@ -128,7 +142,11 @@ export default async function PaginaAreaPessoal() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-4 font-semibold">O meu horário</h2>
           {aluno?.turmaId ? (
-            <HorarioSemanal blocos={blocos} diaEmDestaque={diaDaSemanaEmLisboa(agora)} />
+            <HorarioSemanal
+              blocos={blocos}
+              diaEmDestaque={diaDaSemanaEmLisboa(agora)}
+              mostrarProfessor
+            />
           ) : (
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Ainda não tens turma atribuída.

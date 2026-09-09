@@ -40,7 +40,7 @@ const ATALHOS: AtalhoDoPainel[] = [
     titulo: "Horário de turmas",
     descricao: "O horário semanal das turmas a que estás associado.",
     icone: <IconeCalendario />,
-    perfis: ["professor", "dt", "coordenador", "admin"],
+    perfis: ["dt", "coordenador", "admin"],
   },
   {
     href: "/horarios?vista=pessoal",
