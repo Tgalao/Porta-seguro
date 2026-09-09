@@ -56,6 +56,13 @@ export function FormularioImportar({ turmaId, turmaNome }: { turmaId: string; tu
         onSubmit={analisar}
         className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
       >
+        <a
+          href="/api/horarios/modelo"
+          className="self-start rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+        >
+          ⬇ Descarregar modelo (.xlsx)
+        </a>
+
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Ficheiro Excel (.xlsx)</span>
           <input
