@@ -53,13 +53,24 @@ if (!process.argv.includes(CONFIRMACAO)) {
   process.exit(1);
 }
 
+import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { Curso, Turma, Horario, Utilizador, Registo, Ocorrencia } from "@/models";
 import type { IUtilizador, ICurso, ITurma } from "@/models";
 import { hashPassword } from "@/lib/senha";
 import type { Perfil } from "@/lib/constantes";
 
-const PALAVRA_PASSE_SEED = "Seed@2026!";
+/**
+ * Palavra-passe dada a todas as contas criadas por este script.
+ *
+ * NÃO fica escrita aqui de propósito: uma palavra-passe no código é uma
+ * palavra-passe que qualquer pessoa com acesso ao repositório (ou a um
+ * backup dele) conhece — e todas as contas do seed a partilham. Vem da
+ * variável de ambiente `SEED_PASSWORD`; se não estiver definida, o script
+ * inventa uma diferente em cada execução e imprime-a no fim.
+ */
+const PALAVRA_PASSE_SEED =
+  process.env.SEED_PASSWORD ?? `Seed-${crypto.randomBytes(6).toString("base64url")}`;
 
 const DISCIPLINAS_API = [
   "Programação",
