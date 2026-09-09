@@ -8,7 +8,7 @@
 import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador, Turma, Registo, Horario } from "@/models";
 import { turmasDoUtilizador } from "@/lib/ambito";
-import { limitesDoMesEmLisboa, formatarData } from "@/lib/datas";
+import { limitesDoMesEmLisboa, formatarData, formatarHora } from "@/lib/datas";
 import type { Perfil } from "@/lib/constantes";
 import {
   calcularAssiduidade,
@@ -65,6 +65,8 @@ export interface ResumoAssiduidade {
 export interface LinhaDiaAssiduidade {
   dataFormatada: string;
   situacao: SituacaoDia;
+  /** Hora exata da entrada ("09:15") — ausente numa falta. */
+  horaEntradaFormatada?: string;
 }
 
 export interface LinhaAlunoAssiduidade {
@@ -145,6 +147,7 @@ export async function calcularResultadoConsulta(
       dias: resultado.dias.map((dia) => ({
         dataFormatada: formatarData(dia.data),
         situacao: dia.situacao,
+        horaEntradaFormatada: dia.horaEntrada ? formatarHora(dia.horaEntrada) : undefined,
       })),
     };
   }

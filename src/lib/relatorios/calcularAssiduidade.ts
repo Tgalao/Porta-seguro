@@ -24,6 +24,8 @@ export interface DiaAssiduidade {
   /** Meia-noite (Lisboa) desse dia, em UTC. */
   data: Date;
   situacao: SituacaoDia;
+  /** Hora exata da entrada autorizada desse dia — ausente numa falta. */
+  horaEntrada?: Date;
 }
 
 export interface ResultadoAssiduidade {
@@ -77,7 +79,7 @@ export function calcularAssiduidade(
           ? "presenca_atraso"
           : "presenca";
 
-      dias.push({ data: inicioDoDia, situacao });
+      dias.push({ data: inicioDoDia, situacao, horaEntrada: entradaDoDia?.dataHora });
     }
 
     cursor = fimDoDia;

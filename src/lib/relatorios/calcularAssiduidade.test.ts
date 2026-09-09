@@ -70,6 +70,18 @@ describe("calcularAssiduidade", () => {
     expect(resultado.taxaPresenca).toBe(0);
   });
 
+  it("guarda a hora exata da entrada num dia de presença, e nenhuma numa falta", () => {
+    const registos = [
+      entradaAutorizada("2026-01-05T08:12:00.000Z"), // segunda: presença às 08:12
+      // quarta: sem registo -> falta, sem hora
+    ];
+    const resultado = calcularAssiduidade(HORARIOS_SEG_QUA_SEX, registos, PERIODO_SEMANA);
+    const segunda = resultado.dias.find((d) => d.data.toISOString() === "2026-01-05T00:00:00.000Z");
+    const quarta = resultado.dias.find((d) => d.data.toISOString() === "2026-01-07T00:00:00.000Z");
+    expect(segunda?.horaEntrada?.toISOString()).toBe("2026-01-05T08:12:00.000Z");
+    expect(quarta?.horaEntrada).toBeUndefined();
+  });
+
   it("calcula a taxa de presença corretamente com presenças e faltas misturadas", () => {
     const registos = [
       entradaAutorizada("2026-01-05T08:00:00.000Z"), // segunda: presença

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { consultarAssiduidade } from "./acoes";
 import type { Ambito, ResultadoConsulta } from "./logica";
+import { SelectPersonalizado } from "@/components/select-personalizado";
 
 interface Opcao {
   id: string;
@@ -16,7 +17,7 @@ const ROTULOS_SITUACAO: Record<string, string> = {
 };
 
 const CLASSE_CAMPO =
-  "rounded-lg border border-slate-300 px-3 py-2 focus:border-teal-600 focus:outline-none dark:border-slate-700 dark:bg-transparent";
+  "rounded-lg border border-slate-300 px-3 py-2 focus:border-sky-600 focus:outline-none dark:border-slate-700 dark:bg-transparent";
 
 export function FiltroConsulta({
   alunos,
@@ -63,62 +64,56 @@ export function FiltroConsulta({
     <div className="flex flex-col gap-6">
       <form
         onSubmit={consultar}
-        className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+        className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:flex-wrap sm:items-end dark:border-slate-800 dark:bg-slate-900"
       >
-        <label className="flex flex-col gap-1 text-sm">
-          Âmbito
-          <select
-            value={ambito}
-            onChange={(e) => mudarAmbito(e.target.value as Ambito)}
-            className={CLASSE_CAMPO}
-          >
-            <option value="aluno">Por aluno</option>
-            <option value="turma">Por turma</option>
-            <option value="ano">Por ano de formação</option>
-          </select>
-        </label>
+        <SelectPersonalizado
+          rotulo="Âmbito"
+          valor={ambito}
+          onAlterar={(v) => mudarAmbito(v as Ambito)}
+          opcoes={[
+            { valor: "aluno", rotulo: "Por aluno" },
+            { valor: "turma", rotulo: "Por turma" },
+            { valor: "ano", rotulo: "Por ano de formação" },
+          ]}
+          className="w-full sm:w-auto"
+        />
 
-        <label className="flex flex-col gap-1 text-sm">
-          {ambito === "aluno" ? "Aluno" : ambito === "turma" ? "Turma" : "Ano"}
-          <select
-            value={alvo}
-            onChange={(e) => setAlvo(e.target.value)}
-            className={`min-w-48 ${CLASSE_CAMPO}`}
-          >
-            {opcoesAtuais.map((opcao) => (
-              <option key={opcao.valor} value={opcao.valor}>
-                {opcao.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectPersonalizado
+          rotulo={ambito === "aluno" ? "Aluno" : ambito === "turma" ? "Turma" : "Ano"}
+          valor={alvo}
+          onAlterar={setAlvo}
+          opcoes={opcoesAtuais.map((o) => ({ valor: o.valor, rotulo: o.rotulo }))}
+          className="w-full sm:w-auto sm:min-w-48"
+        />
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex w-full flex-col gap-1 text-sm sm:w-auto">
           Mês
           <input
             type="month"
             value={mes}
             onChange={(e) => setMes(e.target.value)}
-            className={CLASSE_CAMPO}
+            className={`w-full ${CLASSE_CAMPO}`}
           />
         </label>
 
-        <button
-          type="submit"
-          disabled={aEnviar || !alvo}
-          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50"
-        >
-          {aEnviar ? "A consultar..." : "Consultar"}
-        </button>
-
-        {podeExportar && resultado?.ok && (
-          <a
-            href={`/api/relatorios/pdf?ambito=${ambito}&alvo=${alvo}&mes=${mes}`}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <button
+            type="submit"
+            disabled={aEnviar || !alvo}
+            className="flex-1 rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800 disabled:opacity-50 sm:flex-none"
           >
-            Exportar PDF
-          </a>
-        )}
+            {aEnviar ? "A consultar..." : "Consultar"}
+          </button>
+
+          {podeExportar && resultado?.ok && (
+            <a
+              href={`/api/relatorios/pdf?ambito=${ambito}&alvo=${alvo}&mes=${mes}`}
+              className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-center text-sm transition hover:bg-slate-100 sm:flex-none dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+              Exportar PDF
+            </a>
+          )}
+        </div>
       </form>
 
       {resultado && !resultado.ok && (
@@ -148,6 +143,7 @@ export function FiltroConsulta({
                   <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
                     <th className="py-2 pr-4 font-medium">Dia</th>
                     <th className="py-2 pr-4 font-medium">Situação</th>
+                    <th className="py-2 pr-4 font-medium">Entrada</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -158,11 +154,14 @@ export function FiltroConsulta({
                     >
                       <td className="py-2 pr-4 font-mono tabular-nums">{dia.dataFormatada}</td>
                       <td className="py-2 pr-4">{ROTULOS_SITUACAO[dia.situacao]}</td>
+                      <td className="py-2 pr-4 font-mono tabular-nums">
+                        {dia.horaEntradaFormatada ?? "—"}
+                      </td>
                     </tr>
                   ))}
                   {resultado.dias.length === 0 && (
                     <tr>
-                      <td colSpan={2} className="py-6 text-center text-slate-500 dark:text-slate-400">
+                      <td colSpan={3} className="py-6 text-center text-slate-500 dark:text-slate-400">
                         Sem dias letivos neste mês.
                       </td>
                     </tr>
