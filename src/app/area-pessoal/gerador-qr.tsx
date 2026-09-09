@@ -21,11 +21,15 @@ function segundosRestantes(validoAteISO: string): number {
 export function GeradorQR({
   tokenInicial,
   podeGerar,
+  podeEscolherHora,
 }: {
   tokenInicial: TokenGerado | null;
   /** Falso para quem está a aceder por PC (RF15: o código destina-se ao
    * telemóvel) — exceto a conta de teste, usada para a defesa oral. */
   podeGerar: boolean;
+  /** Só verdadeiro para a conta de teste — dá para escolher a data/hora
+   * que a leitura na portaria deve usar, em vez da hora real. */
+  podeEscolherHora: boolean;
 }) {
   const [token, setToken] = useState<TokenGerado | null>(tokenInicial);
   const [segundos, setSegundos] = useState(() =>
@@ -34,6 +38,9 @@ export function GeradorQR({
   const [estado, setEstado] = useState<EstadoTokenQR>({ usado: false });
   const [erro, setErro] = useState<string | null>(null);
   const [aGerar, iniciarTransicao] = useTransition();
+  const [simularHora, setSimularHora] = useState(false);
+  const [dataSimulada, setDataSimulada] = useState("");
+  const [horaSimulada, setHoraSimulada] = useState("");
 
   // Um único intervalo faz as duas coisas: atualiza a contagem decrescente
   // E pergunta ao servidor se o código já foi lido — não vale a pena dois
@@ -55,7 +62,10 @@ export function GeradorQR({
 
   function gerar() {
     iniciarTransicao(async () => {
-      const resultado = await gerarNovoTokenQR();
+      const resultado =
+        podeEscolherHora && simularHora && dataSimulada && horaSimulada
+          ? await gerarNovoTokenQR(dataSimulada, horaSimulada)
+          : await gerarNovoTokenQR();
       if (!resultado.ok) {
         setErro(resultado.erro);
         return;
@@ -78,6 +88,11 @@ export function GeradorQR({
       {mostrarImagem && (
         <>
           <RotuloDirecao tipo={token.tipo} />
+          {token.momentoSimuladoFormatado && (
+            <p className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+              Simulado para {token.momentoSimuladoFormatado}
+            </p>
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element -- imagem gerada localmente (data URL), não faz sentido otimizar com next/image */}
           <img
             src={token.imagemDataUrl}
@@ -90,6 +105,35 @@ export function GeradorQR({
             Válido por mais {Math.floor(segundos / 60)}:{String(segundos % 60).padStart(2, "0")}
           </p>
         </>
+      )}
+
+      {podeEscolherHora && !mostrarImagem && (
+        <div className="flex w-full max-w-xs flex-col gap-2 rounded-xl border border-purple-200 bg-purple-50 p-3 text-sm dark:border-purple-900 dark:bg-purple-950/40">
+          <label className="flex items-center gap-2 font-medium text-purple-900 dark:text-purple-200">
+            <input
+              type="checkbox"
+              checked={simularHora}
+              onChange={(evento) => setSimularHora(evento.target.checked)}
+            />
+            Simular outra data/hora
+          </label>
+          {simularHora && (
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="date"
+                value={dataSimulada}
+                onChange={(evento) => setDataSimulada(evento.target.value)}
+                className="rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
+              />
+              <input
+                type="time"
+                value={horaSimulada}
+                onChange={(evento) => setHoraSimulada(evento.target.value)}
+                className="rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {estado.usado && <ResultadoLeitura estado={estado} tipo={token?.tipo} />}

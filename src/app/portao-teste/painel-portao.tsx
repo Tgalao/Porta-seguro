@@ -7,6 +7,7 @@ import {
   confirmarIdentidadeQR,
 } from "./acoes";
 import type { AlunoResumo, LinhaRegisto, ResultadoMovimento } from "@/lib/movimento";
+import type { MetodoRegisto } from "@/lib/constantes";
 import { LeitorQR } from "./leitor-qr";
 import {
   CartaoAluno,
@@ -26,8 +27,9 @@ type Estado =
       motivo: string;
       horarioId?: string;
       momentoISO: string;
+      metodo: MetodoRegisto;
     }
-  | { passo: "confirmar-identidade"; aluno: AlunoResumo };
+  | { passo: "confirmar-identidade"; aluno: AlunoResumo; momentoISO: string; metodo: MetodoRegisto };
 
 const ROTULOS_ESTADO: Record<string, string> = {
   autorizado: "Autorizado",
@@ -66,6 +68,7 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
         motivo: resultado.motivo,
         horarioId: resultado.horarioId,
         momentoISO: resultado.momentoISO,
+        metodo: resultado.metodo,
       });
       return;
     }
@@ -80,10 +83,16 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
 
   function responderContactoPais(paisAutorizaram: boolean) {
     if (estado.passo !== "pendente") return;
-    const { aluno, horarioId, momentoISO } = estado;
+    const { aluno, horarioId, momentoISO, metodo } = estado;
 
     iniciarTransicao(async () => {
-      const resultado = await confirmarSaidaComPais(aluno.id, horarioId, momentoISO, paisAutorizaram);
+      const resultado = await confirmarSaidaComPais(
+        aluno.id,
+        horarioId,
+        momentoISO,
+        metodo,
+        paisAutorizaram,
+      );
 
       if (!resultado.ok) {
         setEstado({ passo: "erro", mensagem: resultado.erro });
@@ -115,16 +124,21 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
         setEstado({ passo: "erro", mensagem: resultado.erro });
         return;
       }
-      setEstado({ passo: "confirmar-identidade", aluno: resultado.aluno });
+      setEstado({
+        passo: "confirmar-identidade",
+        aluno: resultado.aluno,
+        momentoISO: resultado.momentoISO,
+        metodo: resultado.metodo,
+      });
     });
   }
 
   function responderIdentidade(eEsteAluno: boolean) {
     if (estado.passo !== "confirmar-identidade") return;
-    const { aluno } = estado;
+    const { aluno, momentoISO, metodo } = estado;
 
     iniciarTransicao(async () => {
-      const resultado = await confirmarIdentidadeQR(aluno.id, eEsteAluno);
+      const resultado = await confirmarIdentidadeQR(aluno.id, eEsteAluno, momentoISO, metodo);
 
       if (!resultado.ok) {
         setEstado({ passo: "erro", mensagem: resultado.erro });

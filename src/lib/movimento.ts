@@ -74,6 +74,7 @@ export type ResultadoMovimento =
       motivo: string;
       horarioId?: string;
       momentoISO: string;
+      metodo: MetodoRegisto;
     };
 
 export type AlunoParaMovimento = Pick<
@@ -235,6 +236,7 @@ export async function processarMovimento(
       motivo: decisao.motivo,
       horarioId: decisao.horarioId?.toString(),
       momentoISO: momento.toISOString(),
+      metodo,
     };
   }
 

@@ -34,8 +34,8 @@ export default async function PaginaAreaPessoal() {
 
   const agora = new Date();
   const userAgent = (await headers()).get("user-agent");
-  const podeGerarQR =
-    ehUserAgentDeTelemovel(userAgent) || sessao.user.email === EMAIL_CONTA_DE_TESTE_QR;
+  const ehContaDeTeste = sessao.user.email === EMAIL_CONTA_DE_TESTE_QR;
+  const podeGerarQR = ehUserAgentDeTelemovel(userAgent) || ehContaDeTeste;
 
   const aluno = await Utilizador.findById(sessao.user.id).select("turmaId").lean();
 
@@ -118,7 +118,11 @@ export default async function PaginaAreaPessoal() {
             ser usado uma vez, e só serve para o movimento — entrada ou saída
             — indicado abaixo dele.
           </p>
-          <GeradorQR tokenInicial={tokenInicial} podeGerar={podeGerarQR} />
+          <GeradorQR
+            tokenInicial={tokenInicial}
+            podeGerar={podeGerarQR}
+            podeEscolherHora={ehContaDeTeste}
+          />
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">

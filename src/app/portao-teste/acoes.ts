@@ -35,6 +35,7 @@ import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
 import { Utilizador, Turma, Horario, Registo, Ocorrencia, TokenQR } from "@/models";
 import { validarTokenQR, proximoTipoRegisto } from "@/lib/regras";
+import type { MetodoRegisto } from "@/lib/constantes";
 import {
   processarMovimento,
   confirmarSaidaComPais as confirmarSaidaComPaisPartilhado,
@@ -53,6 +54,7 @@ export async function confirmarSaidaComPais(
   alunoId: string,
   horarioId: string | undefined,
   momentoISO: string,
+  metodo: MetodoRegisto,
   paisAutorizaram: boolean,
 ): Promise<ResultadoConfirmacao> {
   const sessao = await exigirPerfil(["porteiro", "admin"]);
@@ -60,7 +62,7 @@ export async function confirmarSaidaComPais(
     alunoId,
     horarioId,
     momentoISO,
-    "qr",
+    metodo,
     paisAutorizaram,
     sessao.user.id,
   );
@@ -68,7 +70,18 @@ export async function confirmarSaidaComPais(
 
 export type ResultadoLeituraQR =
   | { ok: false; erro: string }
-  | { ok: true; confirmarIdentidade: true; aluno: AlunoResumo };
+  | {
+      ok: true;
+      confirmarIdentidade: true;
+      aluno: AlunoResumo;
+      /** Momento a usar para decidir o movimento — real, ou a hora
+       * simulada guardada no código (ver `gerarNovoTokenQR`). */
+      momentoISO: string;
+      /** "simulacao" quando o código foi gerado com uma hora simulada
+       * (só a conta de teste consegue isso) — para o registo final nunca
+       * se confundir com um movimento real. */
+      metodo: MetodoRegisto;
+    };
 
 /**
  * Lê um código QR (RF15). Se for válido, NÃO regista logo o movimento —
@@ -84,12 +97,25 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
     return { ok: false, erro: "Código QR não reconhecido." };
   }
 
+  // A validade do código (usado/expirado) é sempre verificada com a hora
+  // REAL — o código só continua a existir durante o minuto verdadeiro a
+  // seguir a ser gerado, mesmo que carregue uma hora simulada para a
+  // decisão. Só a decisão de entrada/saída (mais abaixo) é que usa a hora
+  // simulada, quando existe.
   const momento = new Date();
+  const momentoDecisao = tokenQR.momentoSimulado ?? momento;
+  const metodo: MetodoRegisto = tokenQR.momentoSimulado ? "simulacao" : "qr";
 
   // A direção esperada é calculada com a MESMA regra usada quando o código
   // foi gerado — se o aluno já teve outro movimento entretanto, deixa de
   // bater certo com `tokenQR.tipo`, e é isso que `validarTokenQR` recusa.
-  const ultimoRegisto = await Registo.findOne({ alunoId: tokenQR.alunoId })
+  // Filtrado por antes do momento da decisão, pela mesma razão da
+  // simulação do admin: sem isto, um momento simulado no passado ignorava-o
+  // e olhava sempre para o registo mais recente de sempre.
+  const ultimoRegisto = await Registo.findOne({
+    alunoId: tokenQR.alunoId,
+    dataHora: { $lt: momentoDecisao },
+  })
     .sort({ dataHora: -1 })
     .lean();
   const tipoEsperado = proximoTipoRegisto(ultimoRegisto?.tipo);
@@ -134,7 +160,9 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
   return {
     ok: true,
     confirmarIdentidade: true,
-    aluno: resumoDoAluno(aluno, turma?.nome, horarios, momento),
+    aluno: resumoDoAluno(aluno, turma?.nome, horarios, momentoDecisao),
+    momentoISO: momentoDecisao.toISOString(),
+    metodo,
   };
 }
 
@@ -157,6 +185,8 @@ export type ResultadoConfirmacaoIdentidade =
 export async function confirmarIdentidadeQR(
   alunoId: string,
   eEsteAluno: boolean,
+  momentoISO: string,
+  metodo: MetodoRegisto,
 ): Promise<ResultadoConfirmacaoIdentidade> {
   const sessao = await exigirPerfil(["porteiro", "admin"]);
   await ligarBaseDados();
@@ -180,5 +210,5 @@ export async function confirmarIdentidadeQR(
     };
   }
 
-  return processarMovimento(aluno, sessao.user.id, "qr", new Date());
+  return processarMovimento(aluno, sessao.user.id, metodo, new Date(momentoISO));
 }

@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
-import { formatarHora } from "@/lib/datas";
+import { formatarHora, formatarDataHora, horaLisboaParaUtc } from "@/lib/datas";
 import { ehUserAgentDeTelemovel, EMAIL_CONTA_DE_TESTE_QR } from "@/lib/dispositivo";
 import { TokenQR, Registo, Ocorrencia } from "@/models";
 import { proximoTipoRegisto } from "@/lib/regras";
@@ -25,6 +25,9 @@ export interface TokenGerado {
   /** Direção com que este código foi gerado — mostrada ao aluno para não
    * haver dúvida de que só serve para entrar OU só para sair. */
   tipo: TipoRegisto;
+  /** Só preenchido para a conta de teste, quando pede uma hora simulada —
+   * mostrado como aviso, para nunca se confundir com um código real. */
+  momentoSimuladoFormatado?: string;
 }
 
 export type ResultadoGeracaoQR =
@@ -47,26 +50,50 @@ export type ResultadoGeracaoQR =
  * diretamente, sem passar pela interface. A conta de teste
  * `5802@eclisboa.net` fica isenta, para permitir demonstrar isto sem
  * telemóvel na defesa oral.
+ *
+ * Essa mesma conta pode ainda escolher `dataSimulada`/`horaSimulada`: a
+ * decisão de entrada/saída (feita mais tarde, quando o porteiro lê o
+ * código) passa a usar essa data/hora em vez do momento real da leitura —
+ * para dar para demonstrar a entrada por QR em qualquer dia/hora sem
+ * esperar pelo momento certo. A validade do próprio código continua real
+ * (1 minuto a partir de agora), para se manter mesmo scanável.
  */
-export async function gerarNovoTokenQR(): Promise<ResultadoGeracaoQR> {
+export async function gerarNovoTokenQR(
+  dataSimulada?: string,
+  horaSimulada?: string,
+): Promise<ResultadoGeracaoQR> {
   const sessao = await exigirPerfil(["aluno"]);
+  const ehContaDeTeste = sessao.user.email === EMAIL_CONTA_DE_TESTE_QR;
 
   const userAgent = (await headers()).get("user-agent");
-  if (!ehUserAgentDeTelemovel(userAgent) && sessao.user.email !== EMAIL_CONTA_DE_TESTE_QR) {
+  if (!ehUserAgentDeTelemovel(userAgent) && !ehContaDeTeste) {
     return {
       ok: false,
       erro: "Este código só pode ser gerado a partir do telemóvel. Abre a tua área pessoal no telemóvel para gerares o código QR.",
     };
   }
 
+  const momentoSimulado =
+    ehContaDeTeste && dataSimulada && horaSimulada
+      ? converterParaMomento(dataSimulada, horaSimulada)
+      : null;
+
   await ligarBaseDados();
 
+  // Ao decidir a direção (entrada/saída), o "último registo" tem de ser o
+  // último ANTES do momento a usar — real, ou simulado quando escolhido.
+  // Sem este filtro, um momento simulado no passado ignorava-o e olhava
+  // sempre para o registo mais recente de sempre (mesmo bug já corrigido
+  // na simulação do admin — ver src/lib/movimento.ts).
+  const momentoParaDecisao = momentoSimulado ?? new Date();
   const [, ultimoRegisto] = await Promise.all([
     TokenQR.updateMany(
       { alunoId: sessao.user.id, usado: false },
       { usado: true, usadoEm: new Date() },
     ),
-    Registo.findOne({ alunoId: sessao.user.id }).sort({ dataHora: -1 }).lean(),
+    Registo.findOne({ alunoId: sessao.user.id, dataHora: { $lt: momentoParaDecisao } })
+      .sort({ dataHora: -1 })
+      .lean(),
   ]);
   const tipo = proximoTipoRegisto(ultimoRegisto?.tipo);
 
@@ -82,6 +109,7 @@ export async function gerarNovoTokenQR(): Promise<ResultadoGeracaoQR> {
     criadoEm,
     validoAte,
     tipo,
+    momentoSimulado: momentoSimulado ?? undefined,
   });
 
   const imagemDataUrl = await QRCode.toDataURL(token, { margin: 1, width: 240 });
@@ -93,8 +121,19 @@ export async function gerarNovoTokenQR(): Promise<ResultadoGeracaoQR> {
       validoAteISO: validoAte.toISOString(),
       imagemDataUrl,
       tipo,
+      momentoSimuladoFormatado: momentoSimulado ? formatarDataHora(momentoSimulado) : undefined,
     },
   };
+}
+
+function converterParaMomento(data: string, hora: string): Date | null {
+  const encaixeData = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+  const encaixeHora = /^(\d{2}):(\d{2})$/.exec(hora);
+  if (!encaixeData || !encaixeHora) return null;
+
+  const [, ano, mes, dia] = encaixeData;
+  const [, horas, minutos] = encaixeHora;
+  return horaLisboaParaUtc(Number(ano), Number(mes), Number(dia), Number(horas), Number(minutos));
 }
 
 export type EstadoTokenQR =

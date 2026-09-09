@@ -29,6 +29,15 @@ export interface ITokenQR {
    * para sair, e vice-versa (decisão do aluno).
    */
   tipo: TipoRegisto;
+  /**
+   * Só preenchido para a conta de teste (`EMAIL_CONTA_DE_TESTE_QR`): a
+   * decisão de entrada/saída passa a usar esta data/hora em vez do
+   * momento real da leitura — para dar para demonstrar, na defesa oral,
+   * a entrada por QR em qualquer dia/hora sem esperar pelo momento certo.
+   * A validade do próprio código (`validoAte`) continua a ser real, para
+   * o código se manter mesmo scanável.
+   */
+  momentoSimulado?: Date;
 }
 
 const TokenQRSchema = new Schema<ITokenQR>(
@@ -44,6 +53,8 @@ const TokenQRSchema = new Schema<ITokenQR>(
     usadoEm: { type: Date },
 
     tipo: { type: String, enum: TIPOS_REGISTO, required: true },
+
+    momentoSimulado: { type: Date },
   },
   { timestamps: true },
 );
