@@ -23,7 +23,7 @@ export default async function PaginaEditarAluno({
   if (!aluno) notFound();
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <CabecalhoSecao
         titulo={`Editar aluno — ${aluno.nomeCompleto}`}
         voltarHref="/admin/alunos"

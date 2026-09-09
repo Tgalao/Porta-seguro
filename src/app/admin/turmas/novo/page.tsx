@@ -15,7 +15,7 @@ export default async function PaginaNovaTurma() {
   ]);
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <CabecalhoSecao titulo="Nova turma" voltarHref="/admin/turmas" voltarLabel="Turmas" />
 
       <main className="mx-auto w-full max-w-md flex-1 px-6 py-8">

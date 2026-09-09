@@ -44,8 +44,8 @@ export default async function PaginaLogin({
     : null;
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <header className="border-b border-slate-200 bg-sky-50 dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex w-full max-w-3xl items-center px-6 py-3">
           <Link
             href="/"

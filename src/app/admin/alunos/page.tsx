@@ -26,7 +26,7 @@ export default async function PaginaAlunos({
   const nomeTurmaPorId = new Map(turmas.map((t) => [t._id.toString(), t.nome]));
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <CabecalhoSecao
         titulo="Alunos"
         voltarHref="/admin"

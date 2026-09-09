@@ -33,7 +33,7 @@ export default async function PaginaConsultas() {
   const mesAtual = `${ano}-${String(mes).padStart(2, "0")}`;
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <CabecalhoSecao titulo="Consultas de assiduidade" voltarHref="/painel" voltarLabel="Painel" />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">

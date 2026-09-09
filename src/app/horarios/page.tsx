@@ -68,8 +68,8 @@ export default async function PaginaHorarios() {
   }));
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex min-h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <header className="border-b border-slate-200 bg-sky-50 dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
             <Logo />
