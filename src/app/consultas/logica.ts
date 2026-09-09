@@ -18,6 +18,18 @@ import {
 
 export type Ambito = "aluno" | "turma" | "ano";
 
+const AMBITOS: Ambito[] = ["aluno", "turma", "ano"];
+
+/**
+ * Confirma que o âmbito é mesmo um dos três — o tipo TypeScript não
+ * sobrevive à compilação, e este valor vem do browser (numa Server Action
+ * ou no endereço do PDF). Sem isto, um âmbito inventado passava adiante e
+ * ia parar, por exemplo, ao nome do ficheiro PDF devolvido.
+ */
+export function ambitoValido(valor: unknown): valor is Ambito {
+  return typeof valor === "string" && (AMBITOS as string[]).includes(valor);
+}
+
 /**
  * Confirma que o alvo pedido está dentro do âmbito de quem pergunta.
  *

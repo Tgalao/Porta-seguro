@@ -12,7 +12,7 @@
  * trocar o `alvo` no endereço para descarregar dados de outra turma.
  */
 import { exigirPerfil } from "@/lib/permissoes";
-import { calcularResultadoConsulta, podeConsultar, type Ambito } from "@/app/consultas/logica";
+import { calcularResultadoConsulta, podeConsultar, ambitoValido } from "@/app/consultas/logica";
 import { gerarPDFRelatorio } from "./gerarPDF";
 
 export const runtime = "nodejs";
@@ -22,11 +22,11 @@ export async function GET(request: Request) {
   const sessao = await exigirPerfil(["coordenador", "gestor", "admin"]);
 
   const { searchParams } = new URL(request.url);
-  const ambito = searchParams.get("ambito") as Ambito | null;
+  const ambito = searchParams.get("ambito");
   const alvo = searchParams.get("alvo");
   const mes = searchParams.get("mes");
 
-  if (!ambito || !alvo || !mes || !/^\d{4}-\d{2}$/.test(mes)) {
+  if (!ambitoValido(ambito) || !alvo || !mes || !/^\d{4}-\d{2}$/.test(mes)) {
     return new Response("Parâmetros em falta ou inválidos.", { status: 400 });
   }
 

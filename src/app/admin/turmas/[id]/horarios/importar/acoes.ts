@@ -39,6 +39,14 @@ export async function analisarExcel(turmaId: string, formData: FormData): Promis
     return { ok: false, erro: "Escolhe um ficheiro Excel (.xlsx)." };
   }
 
+  // Um horário de uma turma são umas dezenas de linhas — nunca chega perto
+  // disto. O limite existe para um ficheiro enorme (ou preparado de
+  // propósito) não pôr o servidor a descomprimir megabytes em memória.
+  const MAX_BYTES = 2 * 1024 * 1024;
+  if (ficheiro.size > MAX_BYTES) {
+    return { ok: false, erro: "O ficheiro é demasiado grande (máximo 2 MB)." };
+  }
+
   let livro: XLSX.WorkBook;
   try {
     const bytes = await ficheiro.arrayBuffer();

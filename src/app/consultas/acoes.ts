@@ -4,6 +4,7 @@ import { exigirPerfil } from "@/lib/permissoes";
 import {
   calcularResultadoConsulta,
   podeConsultar,
+  ambitoValido,
   type Ambito,
   type ResultadoConsulta,
 } from "./logica";
@@ -24,6 +25,9 @@ export async function consultarAssiduidade(
 ): Promise<ResultadoConsulta> {
   const sessao = await exigirPerfil(["coordenador", "gestor", "admin"]);
 
+  if (!ambitoValido(ambito)) {
+    return { ok: false, erro: "Âmbito inválido." };
+  }
   if (!alvo) {
     return { ok: false, erro: "Escolhe um aluno, turma ou ano de formação." };
   }
