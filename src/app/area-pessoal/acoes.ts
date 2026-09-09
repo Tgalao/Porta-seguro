@@ -5,10 +5,12 @@
  */
 
 import crypto from "node:crypto";
+import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
 import { formatarHora } from "@/lib/datas";
+import { ehUserAgentDeTelemovel, EMAIL_CONTA_DE_TESTE_QR } from "@/lib/dispositivo";
 import { TokenQR, Registo, Ocorrencia } from "@/models";
 import { proximoTipoRegisto } from "@/lib/regras";
 import type { TipoRegisto } from "@/lib/constantes";
@@ -25,6 +27,10 @@ export interface TokenGerado {
   tipo: TipoRegisto;
 }
 
+export type ResultadoGeracaoQR =
+  | { ok: true; token: TokenGerado }
+  | { ok: false; erro: string };
+
 /**
  * Gera um código novo, invalidando qualquer código anterior ainda não
  * usado — só pode existir um código válido por aluno de cada vez.
@@ -33,9 +39,26 @@ export interface TokenGerado {
  * alternância da portaria — e é EXIGIDA na leitura (`validarTokenQR`): um
  * código gerado para entrar nunca serve para sair, mesmo que o estado do
  * aluno mude entretanto.
+ *
+ * Restrito ao telemóvel (decisão do aluno): o código destina-se a ser
+ * mostrado na portaria a partir do telemóvel de quem o gera, não gerado
+ * num PC e fotografado ou reencaminhado. Verificado aqui no servidor (não
+ * só escondendo o botão no ecrã) porque a Server Action é chamável
+ * diretamente, sem passar pela interface. A conta de teste
+ * `5802@eclisboa.net` fica isenta, para permitir demonstrar isto sem
+ * telemóvel na defesa oral.
  */
-export async function gerarNovoTokenQR(): Promise<TokenGerado> {
+export async function gerarNovoTokenQR(): Promise<ResultadoGeracaoQR> {
   const sessao = await exigirPerfil(["aluno"]);
+
+  const userAgent = (await headers()).get("user-agent");
+  if (!ehUserAgentDeTelemovel(userAgent) && sessao.user.email !== EMAIL_CONTA_DE_TESTE_QR) {
+    return {
+      ok: false,
+      erro: "Este código só pode ser gerado a partir do telemóvel. Abre a tua área pessoal no telemóvel para gerares o código QR.",
+    };
+  }
+
   await ligarBaseDados();
 
   const [, ultimoRegisto] = await Promise.all([
@@ -64,10 +87,13 @@ export async function gerarNovoTokenQR(): Promise<TokenGerado> {
   const imagemDataUrl = await QRCode.toDataURL(token, { margin: 1, width: 240 });
 
   return {
-    id: tokenQR._id.toString(),
-    validoAteISO: validoAte.toISOString(),
-    imagemDataUrl,
-    tipo,
+    ok: true,
+    token: {
+      id: tokenQR._id.toString(),
+      validoAteISO: validoAte.toISOString(),
+      imagemDataUrl,
+      tipo,
+    },
   };
 }
 

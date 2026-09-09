@@ -164,7 +164,7 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
           <div role="status" className="flex items-center justify-center gap-3 py-8">
             <span
               aria-hidden
-              className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600"
+              className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-sky-600"
             />
             <p className="text-sm font-medium">A ler...</p>
           </div>
@@ -225,7 +225,7 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
               <button
                 type="button"
                 onClick={() => setEstado({ passo: "vazio" })}
-                className="self-start rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
+                className="self-start rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800"
               >
                 Ler o próximo código
               </button>

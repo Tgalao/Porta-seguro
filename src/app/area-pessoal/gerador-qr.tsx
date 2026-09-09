@@ -18,12 +18,21 @@ function segundosRestantes(validoAteISO: string): number {
   return Math.max(0, restam);
 }
 
-export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }) {
+export function GeradorQR({
+  tokenInicial,
+  podeGerar,
+}: {
+  tokenInicial: TokenGerado | null;
+  /** Falso para quem está a aceder por PC (RF15: o código destina-se ao
+   * telemóvel) — exceto a conta de teste, usada para a defesa oral. */
+  podeGerar: boolean;
+}) {
   const [token, setToken] = useState<TokenGerado | null>(tokenInicial);
   const [segundos, setSegundos] = useState(() =>
     tokenInicial ? segundosRestantes(tokenInicial.validoAteISO) : 0,
   );
   const [estado, setEstado] = useState<EstadoTokenQR>({ usado: false });
+  const [erro, setErro] = useState<string | null>(null);
   const [aGerar, iniciarTransicao] = useTransition();
 
   // Um único intervalo faz as duas coisas: atualiza a contagem decrescente
@@ -46,9 +55,14 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
 
   function gerar() {
     iniciarTransicao(async () => {
-      const novo = await gerarNovoTokenQR();
-      setToken(novo);
-      setSegundos(segundosRestantes(novo.validoAteISO));
+      const resultado = await gerarNovoTokenQR();
+      if (!resultado.ok) {
+        setErro(resultado.erro);
+        return;
+      }
+      setErro(null);
+      setToken(resultado.token);
+      setSegundos(segundosRestantes(resultado.token.validoAteISO));
       setEstado({ usado: false });
     });
   }
@@ -72,7 +86,7 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
             height={240}
             className="rounded-xl border border-slate-200 p-2 dark:border-slate-700"
           />
-          <p className="rounded-full bg-teal-50 px-3 py-1 font-mono text-sm tabular-nums text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
+          <p className="rounded-full bg-sky-50 px-3 py-1 font-mono text-sm tabular-nums text-sky-800 dark:bg-sky-950/50 dark:text-sky-300">
             Válido por mais {Math.floor(segundos / 60)}:{String(segundos % 60).padStart(2, "0")}
           </p>
         </>
@@ -84,14 +98,27 @@ export function GeradorQR({ tokenInicial }: { tokenInicial: TokenGerado | null }
         <p className="text-sm text-red-600 dark:text-red-400">Este código expirou.</p>
       )}
 
-      <button
-        type="button"
-        onClick={gerar}
-        disabled={aGerar}
-        className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 disabled:opacity-50"
-      >
-        {aGerar ? "A gerar..." : token ? "Gerar novo código" : "Gerar código QR"}
-      </button>
+      {erro && (
+        <p className="max-w-xs text-center text-sm text-red-600 dark:text-red-400">{erro}</p>
+      )}
+
+      {podeGerar ? (
+        <button
+          type="button"
+          onClick={gerar}
+          disabled={aGerar}
+          className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800 disabled:opacity-50"
+        >
+          {aGerar ? "A gerar..." : token ? "Gerar novo código" : "Gerar código QR"}
+        </button>
+      ) : (
+        !mostrarImagem && (
+          <p className="max-w-xs text-center text-sm text-slate-500 dark:text-slate-400">
+            Este código só pode ser gerado a partir do telemóvel. Abre a tua
+            área pessoal no telemóvel para gerares o código QR.
+          </p>
+        )
+      )}
     </div>
   );
 }
@@ -102,7 +129,7 @@ function RotuloDirecao({ tipo }: { tipo: TipoRegisto }) {
     <span
       className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
         tipo === "entrada"
-          ? "bg-teal-700 text-white"
+          ? "bg-sky-700 text-white"
           : "bg-slate-700 text-white dark:bg-slate-600"
       }`}
     >

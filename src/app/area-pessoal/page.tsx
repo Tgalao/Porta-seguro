@@ -1,18 +1,22 @@
 import QRCode from "qrcode";
+import { headers } from "next/headers";
 import { exigirPerfil } from "@/lib/permissoes";
 import { ligarBaseDados } from "@/lib/mongoose";
+import { ehUserAgentDeTelemovel, EMAIL_CONTA_DE_TESTE_QR } from "@/lib/dispositivo";
 import { TokenQR, Utilizador, Horario, Registo, Turma } from "@/models";
 import {
   limitesDoMesEmLisboa,
   partesEmLisboa,
   diaDaSemanaEmLisboa,
   formatarData,
+  formatarHora,
 } from "@/lib/datas";
 import {
   calcularAssiduidade,
   type RegistoParaAssiduidade,
 } from "@/lib/relatorios/calcularAssiduidade";
 import { GeradorQR } from "./gerador-qr";
+import { AssiduidadeMensal, type LinhaDiaAssinalar } from "./assiduidade-mensal";
 import { CabecalhoSecao } from "@/components/cabecalho-secao";
 import { HorarioSemanal, type BlocoHorario } from "@/components/horario-semanal";
 import type { TokenGerado } from "./acoes";
@@ -29,6 +33,9 @@ export default async function PaginaAreaPessoal() {
   await ligarBaseDados();
 
   const agora = new Date();
+  const userAgent = (await headers()).get("user-agent");
+  const podeGerarQR =
+    ehUserAgentDeTelemovel(userAgent) || sessao.user.email === EMAIL_CONTA_DE_TESTE_QR;
 
   const aluno = await Utilizador.findById(sessao.user.id).select("turmaId").lean();
 
@@ -84,7 +91,15 @@ export default async function PaginaAreaPessoal() {
     sala: h.sala,
   }));
 
-  const faltasEAtrasos = assiduidade.dias.filter((dia) => dia.situacao !== "presenca");
+  const diasAssinalar: LinhaDiaAssinalar[] = assiduidade.dias
+    .filter((dia): dia is typeof dia & { situacao: "presenca_atraso" | "falta" } =>
+      dia.situacao !== "presenca",
+    )
+    .map((dia) => ({
+      dataFormatada: formatarData(dia.data),
+      situacao: dia.situacao,
+      horaEntradaFormatada: dia.horaEntrada ? formatarHora(dia.horaEntrada) : undefined,
+    }));
 
   return (
     <div className="flex min-h-full flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -103,7 +118,7 @@ export default async function PaginaAreaPessoal() {
             ser usado uma vez, e só serve para o movimento — entrada ou saída
             — indicado abaixo dele.
           </p>
-          <GeradorQR tokenInicial={tokenInicial} />
+          <GeradorQR tokenInicial={tokenInicial} podeGerar={podeGerarQR} />
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -117,83 +132,17 @@ export default async function PaginaAreaPessoal() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-4 flex items-center gap-2 font-semibold">
-            A minha assiduidade
-            <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
-              {String(mes).padStart(2, "0")}/{ano}
-            </span>
-          </h2>
-
-          {assiduidade.diasLetivos === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Ainda não há dias letivos registados neste mês.
-            </p>
-          ) : (
-            <>
-              <div className="mb-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Numero titulo="Dias letivos" valor={assiduidade.diasLetivos} />
-                <Numero titulo="Presenças" valor={assiduidade.presencas} destaque="ok" />
-                <Numero titulo="Atrasos" valor={assiduidade.atrasos} destaque="aviso" />
-                <Numero titulo="Faltas" valor={assiduidade.faltas} destaque="critico" />
-              </div>
-
-              <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-                Taxa de presença: {(assiduidade.taxaPresenca * 100).toFixed(0)}%
-              </p>
-
-              {faltasEAtrasos.length > 0 && (
-                <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Dias a assinalar
-                  </h3>
-                  <ul className="flex flex-col gap-1 text-sm">
-                    {faltasEAtrasos.map((dia) => (
-                      <li key={dia.data.toISOString()} className="flex items-center gap-3">
-                        <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                          {formatarData(dia.data)}
-                        </span>
-                        <span
-                          className={
-                            dia.situacao === "falta"
-                              ? "rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
-                              : "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                          }
-                        >
-                          {dia.situacao === "falta" ? "Falta" : "Presença com atraso"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </>
-          )}
-        </section>
+        <AssiduidadeMensal
+          mes={mes}
+          ano={ano}
+          diasLetivos={assiduidade.diasLetivos}
+          presencas={assiduidade.presencas}
+          atrasos={assiduidade.atrasos}
+          faltas={assiduidade.faltas}
+          taxaPresenca={assiduidade.taxaPresenca}
+          diasAssinalar={diasAssinalar}
+        />
       </main>
-    </div>
-  );
-}
-
-function Numero({
-  titulo,
-  valor,
-  destaque,
-}: {
-  titulo: string;
-  valor: number;
-  destaque?: "ok" | "aviso" | "critico";
-}) {
-  const cores = {
-    ok: "text-emerald-700 dark:text-emerald-400",
-    aviso: "text-amber-700 dark:text-amber-400",
-    critico: "text-red-700 dark:text-red-400",
-  };
-
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-800/40">
-      <p className={`text-2xl font-bold tabular-nums ${destaque ? cores[destaque] : ""}`}>{valor}</p>
-      <p className="text-xs text-slate-500 dark:text-slate-400">{titulo}</p>
     </div>
   );
 }
