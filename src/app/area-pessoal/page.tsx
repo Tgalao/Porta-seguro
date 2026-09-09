@@ -17,6 +17,7 @@ import {
 } from "@/lib/relatorios/calcularAssiduidade";
 import { GeradorQR } from "./gerador-qr";
 import { AssiduidadeMensal, type LinhaDiaAssinalar } from "./assiduidade-mensal";
+import { AbasAreaPessoal } from "./abas-area-pessoal";
 import { CabecalhoSecao } from "@/components/cabecalho-secao";
 import { HorarioSemanal, type BlocoHorario } from "@/components/horario-semanal";
 import type { TokenGerado } from "./acoes";
@@ -124,45 +125,52 @@ export default async function PaginaAreaPessoal() {
         voltarLabel="Painel"
       />
 
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-8">
-        <section className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="font-semibold">O meu código QR</h2>
-          <p className="max-w-sm text-center text-sm text-slate-500 dark:text-slate-400">
-            Mostra este código na portaria. É válido durante 1 minuto, só pode
-            ser usado uma vez, e só serve para o movimento — entrada ou saída
-            — indicado abaixo dele.
-          </p>
-          <GeradorQR
-            tokenInicial={tokenInicial}
-            podeGerar={podeGerarQR}
-            podeEscolherHora={ehContaDeTeste}
-          />
-        </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-4 font-semibold">O meu horário</h2>
-          {aluno?.turmaId ? (
-            <HorarioSemanal
-              blocos={blocos}
-              diaEmDestaque={diaDaSemanaEmLisboa(agora)}
-              mostrarProfessor
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8 lg:max-w-5xl">
+        <AbasAreaPessoal
+          qr={
+            <section className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="font-semibold">O meu código QR</h2>
+              <p className="max-w-sm text-center text-sm text-slate-500 dark:text-slate-400">
+                Mostra este código na portaria. É válido durante 1 minuto, só
+                pode ser usado uma vez, e só serve para o movimento — entrada
+                ou saída — indicado abaixo dele.
+              </p>
+              <GeradorQR
+                tokenInicial={tokenInicial}
+                podeGerar={podeGerarQR}
+                podeEscolherHora={ehContaDeTeste}
+              />
+            </section>
+          }
+          horario={
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 lg:p-8">
+              <h2 className="mb-4 text-lg font-semibold lg:text-xl">O meu horário</h2>
+              {aluno?.turmaId ? (
+                <HorarioSemanal
+                  blocos={blocos}
+                  diaEmDestaque={diaDaSemanaEmLisboa(agora)}
+                  mostrarProfessor
+                  tamanhoGrande
+                />
+              ) : (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Ainda não tens turma atribuída.
+                </p>
+              )}
+            </section>
+          }
+          assiduidade={
+            <AssiduidadeMensal
+              mes={mes}
+              ano={ano}
+              diasLetivos={assiduidade.diasLetivos}
+              presencas={assiduidade.presencas}
+              atrasos={assiduidade.atrasos}
+              faltas={assiduidade.faltas}
+              taxaPresenca={assiduidade.taxaPresenca}
+              diasAssinalar={diasAssinalar}
             />
-          ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Ainda não tens turma atribuída.
-            </p>
-          )}
-        </section>
-
-        <AssiduidadeMensal
-          mes={mes}
-          ano={ano}
-          diasLetivos={assiduidade.diasLetivos}
-          presencas={assiduidade.presencas}
-          atrasos={assiduidade.atrasos}
-          faltas={assiduidade.faltas}
-          taxaPresenca={assiduidade.taxaPresenca}
-          diasAssinalar={diasAssinalar}
+          }
         />
       </main>
     </div>

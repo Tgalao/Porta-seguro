@@ -31,6 +31,7 @@ export function HorarioSemanal({
   mostrarProfessor = false,
   mostrarTurma = false,
   diaEmDestaque,
+  tamanhoGrande = false,
 }: {
   blocos: BlocoHorario[];
   mostrarProfessor?: boolean;
@@ -39,6 +40,10 @@ export function HorarioSemanal({
   /** Dia da semana a destacar (0 = domingo). Usado para marcar "hoje" e
    * para começar já aberto, por ser o dia mais provável de interessar. */
   diaEmDestaque?: number;
+  /** Letras maiores e uma 3.ª coluna em ecrãs largos — usado na área
+   * pessoal do aluno, agora que tem uma aba só para o horário e sobra
+   * espaço no PC para o mostrar mais confortável. */
+  tamanhoGrande?: boolean;
 }) {
   const [diasAbertos, setDiasAbertos] = useState<ReadonlySet<number>>(
     () => new Set(diaEmDestaque !== undefined ? [diaEmDestaque] : []),
@@ -64,7 +69,7 @@ export function HorarioSemanal({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className={`grid gap-3 sm:grid-cols-2 ${tamanhoGrande ? "lg:grid-cols-3 lg:gap-4" : ""}`}>
       {diasComAulas.map((dia) => {
         const doDia = blocos
           .filter((b) => b.diaSemana === dia)
@@ -85,9 +90,11 @@ export function HorarioSemanal({
               type="button"
               onClick={() => alternar(dia)}
               aria-expanded={aberto}
-              className="flex w-full items-center justify-between gap-2 p-3.5 text-left"
+              className={`flex w-full items-center justify-between gap-2 text-left ${tamanhoGrande ? "p-4 lg:p-5" : "p-3.5"}`}
             >
-              <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+              <span
+                className={`flex flex-wrap items-center gap-2 font-semibold ${tamanhoGrande ? "text-base lg:text-lg" : "text-sm"}`}
+              >
                 {NOMES_DIAS_SEMANA[dia]}
                 {emDestaque && (
                   <span className="rounded-full bg-blue-700 px-2 py-0.5 text-[10px] font-medium text-white">
@@ -102,10 +109,14 @@ export function HorarioSemanal({
             </button>
 
             {aberto && (
-              <ul className="flex flex-col gap-1.5 px-3.5 pb-3.5 text-sm">
+              <ul
+                className={`flex flex-col px-3.5 pb-3.5 ${tamanhoGrande ? "gap-3 lg:px-5 lg:pb-5 lg:text-base" : "gap-1.5 text-sm"}`}
+              >
                 {doDia.map((bloco, indice) => (
                   <li key={indice} className="flex flex-col">
-                    <span className="font-mono text-xs tabular-nums text-blue-700 dark:text-blue-400">
+                    <span
+                      className={`font-mono tabular-nums text-blue-700 dark:text-blue-400 ${tamanhoGrande ? "text-sm" : "text-xs"}`}
+                    >
                       {bloco.horaInicio}–{bloco.horaFim}
                     </span>
                     <span className="font-medium">
@@ -118,7 +129,9 @@ export function HorarioSemanal({
                     </span>
                     {/* Não prefixar com "Sala": o campo já costuma vir escrito
                      * por extenso na base de dados (ex.: "Sala 101"). */}
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span
+                      className={`text-slate-500 dark:text-slate-400 ${tamanhoGrande ? "text-sm" : "text-xs"}`}
+                    >
                       {[bloco.sala, mostrarProfessor ? bloco.professor : undefined]
                         .filter(Boolean)
                         .join(" · ")}
