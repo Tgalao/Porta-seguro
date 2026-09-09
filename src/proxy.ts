@@ -28,10 +28,10 @@ export const config = {
      *  - _next/static   -> ficheiros gerados pelo Next.js
      *  - _next/image    -> otimização de imagens do Next.js
      *  - ficheiros com extensão de imagem/ícone -> tudo o que está em
-     *    public/ (ex.: o logótipo da escola no ecrã de login). Sem esta
-     *    exceção, um pedido a /logo-escola.png sem sessão era redirecionado
-     *    para /login — devolvendo HTML em vez da imagem — precisamente na
-     *    única página onde alguém sem sessão está autorizado a estar.
+     *    public/ (ex.: o logótipo no ecrã de login). Sem esta exceção, um
+     *    pedido a /logo.png sem sessão era redirecionado para /login —
+     *    devolvendo HTML em vez da imagem — precisamente na única página
+     *    onde alguém sem sessão está autorizado a estar.
      */
     "/((?!api/auth|api/saude|_next/static|_next/image|.*\\.(?:ico|png|jpg|jpeg|svg|gif|webp)$).*)",
   ],

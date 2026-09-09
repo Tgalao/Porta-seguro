@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoEscola } from "@/components/logo-escola";
+import { Logo } from "@/components/logo";
 
 /**
  * Cabeçalho partilhado por todas as páginas "internas" do site (depois do
@@ -26,7 +26,7 @@ export function CabecalhoSecao({
     <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-3 px-6 py-3">
         <div className="flex items-center gap-3">
-          <LogoEscola />
+          <Logo />
           <div className="leading-tight">
             <h1 className="font-semibold">{titulo}</h1>
             {subtitulo && (

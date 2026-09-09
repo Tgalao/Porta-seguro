@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoEscola } from "@/components/logo-escola";
+import { Logo } from "@/components/logo";
 import { exigirPerfil } from "@/lib/permissoes";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { turmasDoUtilizador } from "@/lib/ambito";
@@ -72,7 +72,7 @@ export default async function PaginaHorarios() {
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
-            <LogoEscola />
+            <Logo />
             <div className="leading-tight">
               <h1 className="font-semibold">Horário de turmas</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">

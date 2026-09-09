@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import { LogoEscola } from "@/components/logo-escola";
+import { Logo } from "@/components/logo";
 import { redirect } from "next/navigation";
 import { FormularioCredenciais } from "./formulario-credenciais";
 import { entrarComGoogle } from "./acoes";
@@ -48,7 +48,7 @@ export default async function PaginaLogin({
         <div className="mx-auto flex w-full max-w-3xl items-center px-6 py-3">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm text-slate-600 transition hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-400"
+            className="flex items-center gap-2 text-sm text-slate-600 transition hover:text-sky-700 dark:text-slate-400 dark:hover:text-sky-400"
           >
             ← Página principal
           </Link>
@@ -58,7 +58,7 @@ export default async function PaginaLogin({
       <main className="flex flex-1 flex-col items-center justify-center p-8">
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
-            <LogoEscola className="h-11 w-11" />
+            <Logo className="h-11 w-11" />
             <h1 className="text-2xl font-bold">PortãoSeguro</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Inicia sessão para continuar

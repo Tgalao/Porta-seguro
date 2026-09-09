@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoEscola } from "@/components/logo-escola";
+import { Logo } from "@/components/logo";
 import { exigirSessao } from "@/lib/permissoes";
 import { signOut } from "@/auth";
 import type { Perfil } from "@/lib/constantes";
@@ -70,7 +70,7 @@ export default async function Painel({
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
-            <LogoEscola />
+            <Logo />
             <div className="leading-tight">
               <p className="font-semibold">PortãoSeguro</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">Painel</p>
@@ -100,7 +100,7 @@ export default async function Painel({
         <div>
           <p className="text-sm text-slate-500 dark:text-slate-400">Sessão iniciada como</p>
           <h1 className="text-2xl font-bold">{sessao.user.name}</h1>
-          <p className="text-sm text-teal-700 dark:text-teal-400">{ROTULO_PERFIL[sessao.user.perfil]}</p>
+          <p className="text-sm text-sky-700 dark:text-sky-400">{ROTULO_PERFIL[sessao.user.perfil]}</p>
         </div>
 
         {erro === "sem-permissao" && (
@@ -119,9 +119,9 @@ export default async function Painel({
               <Link
                 key={atalho.href}
                 href={atalho.href}
-                className="group flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-lg hover:shadow-teal-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-700"
+                className="group flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg hover:shadow-sky-900/5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-700"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700 transition-colors group-hover:bg-teal-700 group-hover:text-white dark:bg-teal-950/50 dark:text-teal-400">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700 transition-colors group-hover:bg-sky-700 group-hover:text-white dark:bg-sky-950/50 dark:text-sky-400">
                   {atalho.icone}
                 </span>
                 <span className="flex flex-col gap-0.5">
