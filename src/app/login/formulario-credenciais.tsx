@@ -1,16 +1,20 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { entrarComCredenciais } from "./acoes";
+import { entrarComCredenciais, type EstadoLogin } from "./acoes";
 
 /**
  * Componente de cliente porque usa `useActionState`, um hook do React que
- * guarda a mensagem de erro devolvida pela Server Action e sabe quando o
- * formulário está a ser submetido (para desativar o botão).
+ * guarda o estado devolvido pela Server Action e sabe quando o formulário
+ * está a ser submetido (para desativar o botão).
  */
 export function FormularioCredenciais() {
-  const [erro, acao, aEnviar] = useActionState(entrarComCredenciais, undefined);
+  const [estado, acao, aEnviar] = useActionState<EstadoLogin, FormData>(entrarComCredenciais, {
+    passo: "credenciais",
+  });
   const [passwordVisivel, setPasswordVisivel] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const pedeCodigo = estado.passo === "codigo";
   // Campos "controlados" de propósito: depois de uma Server Action que não
   // navega para outra página (ex.: login recusado), o browser repõe o
   // <form> nativo aos valores iniciais — apagava o que a pessoa tinha
@@ -58,14 +62,39 @@ export function FormularioCredenciais() {
         </div>
       </label>
 
-      {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
+      {pedeCodigo && (
+        <label className="flex flex-col gap-1 text-sm">
+          Código de acesso
+          <input
+            // `inputMode="numeric"` faz o telemóvel abrir logo o teclado de
+            // números; `autoComplete="one-time-code"` deixa o iOS/Android
+            // sugerir o código a partir da notificação do email.
+            type="text"
+            name="codigo"
+            required
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            autoFocus
+            placeholder="000000"
+            value={codigo}
+            onChange={(evento) => setCodigo(evento.target.value.replace(/\D/g, ""))}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-center text-lg tracking-[0.4em] focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          />
+        </label>
+      )}
+
+      {estado.aviso && !estado.erro && (
+        <p className="text-sm text-blue-700 dark:text-blue-400">{estado.aviso}</p>
+      )}
+      {estado.erro && <p className="text-sm text-red-600 dark:text-red-400">{estado.erro}</p>}
 
       <button
         type="submit"
         disabled={aEnviar}
         className="mt-2 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:opacity-50"
       >
-        {aEnviar ? "A entrar..." : "Entrar"}
+        {aEnviar ? "A entrar..." : pedeCodigo ? "Confirmar código" : "Entrar"}
       </button>
     </form>
   );

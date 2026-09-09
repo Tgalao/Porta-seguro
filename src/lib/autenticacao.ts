@@ -9,6 +9,7 @@
 import { ligarBaseDados } from "@/lib/mongoose";
 import { Utilizador, TentativaLogin, MAX_TENTATIVAS, JANELA_MINUTOS } from "@/models";
 import { verificarPassword } from "@/lib/senha";
+import { precisaDoisFatores, confirmarCodigo } from "@/lib/dois-fatores";
 import type { Perfil } from "@/lib/constantes";
 
 export interface UtilizadorAutenticado {
@@ -19,12 +20,19 @@ export interface UtilizadorAutenticado {
 }
 
 /**
- * Verifica um par email + palavra-passe contra a base de dados.
- * Devolve os dados do utilizador se forem válidos, ou `null` caso contrário
- * — nunca diz especificamente se foi o email que não existe ou a password
- * que está errada, para não ajudar alguém a adivinhar que contas existem.
+ * Verifica um par email + palavra-passe contra a base de dados — SEM o
+ * segundo fator.
+ *
+ * Está separada de `autorizarCredenciais` porque o ecrã de login precisa
+ * dela sozinha no primeiro passo: para saber a quem enviar o código, é
+ * preciso primeiro confirmar que a palavra-passe está certa (senão qualquer
+ * pessoa fazia o sistema enviar emails para contas que não são suas).
+ *
+ * Devolve `null` tanto para email inexistente como para palavra-passe
+ * errada — nunca diz qual dos dois falhou, para não ajudar alguém a
+ * adivinhar que contas existem.
  */
-export async function autorizarCredenciais(
+export async function verificarCredenciais(
   email: unknown,
   palavraPasse: unknown,
   ip?: string,
@@ -86,6 +94,35 @@ export async function autorizarCredenciais(
     name: utilizador.nomeCompleto,
     perfil: utilizador.perfil,
   };
+}
+
+/**
+ * O que o Auth.js chama para decidir se alguém entra: palavra-passe certa
+ * E, nas contas admin/gestor, o código de 6 dígitos enviado por email.
+ *
+ * A verificação do código é feita AQUI, e não só no ecrã de login, porque
+ * uma Server Action é um endereço HTTP normal — quem soubesse a
+ * palavra-passe do admin podia chamar o `signIn` diretamente e saltar o
+ * passo do código se ele vivesse só na interface.
+ */
+export async function autorizarCredenciais(
+  email: unknown,
+  palavraPasse: unknown,
+  codigo: unknown,
+  ip?: string,
+): Promise<UtilizadorAutenticado | null> {
+  const utilizador = await verificarCredenciais(email, palavraPasse, ip);
+  if (!utilizador) return null;
+
+  if (!precisaDoisFatores(utilizador.perfil)) {
+    return utilizador;
+  }
+
+  if (!(await confirmarCodigo(utilizador.email, codigo))) {
+    return null;
+  }
+
+  return utilizador;
 }
 
 /**

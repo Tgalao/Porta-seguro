@@ -18,3 +18,9 @@ export {
   MAX_TENTATIVAS,
   JANELA_MINUTOS,
 } from "./TentativaLogin";
+export {
+  CodigoVerificacao,
+  type ICodigoVerificacao,
+  VALIDADE_CODIGO_MINUTOS,
+  MAX_TENTATIVAS_CODIGO,
+} from "./CodigoVerificacao";
