@@ -38,6 +38,13 @@ export interface ITokenQR {
    * o código se manter mesmo scanável.
    */
   momentoSimulado?: Date;
+  /**
+   * Quando é que este código já deu origem a um registo de entrada/saída.
+   * `usado` marca a LEITURA (o porteiro apontou a câmara); este marca a
+   * conclusão. Serve para o mesmo código não poder gerar dois movimentos
+   * se alguém repetir o pedido de confirmação de identidade.
+   */
+  movimentoRegistadoEm?: Date;
 }
 
 const TokenQRSchema = new Schema<ITokenQR>(
@@ -55,6 +62,8 @@ const TokenQRSchema = new Schema<ITokenQR>(
     tipo: { type: String, enum: TIPOS_REGISTO, required: true },
 
     momentoSimulado: { type: Date },
+
+    movimentoRegistadoEm: { type: Date },
   },
   { timestamps: true },
 );

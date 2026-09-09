@@ -7,7 +7,6 @@ import {
   confirmarIdentidadeQR,
 } from "./acoes";
 import type { AlunoResumo, LinhaRegisto, ResultadoMovimento } from "@/lib/movimento";
-import type { MetodoRegisto } from "@/lib/constantes";
 import { LeitorQR } from "./leitor-qr";
 import {
   CartaoAluno,
@@ -21,15 +20,10 @@ type Estado =
   | { passo: "a-ler" }
   | { passo: "erro"; mensagem: string }
   | { passo: "resultado"; aluno: AlunoResumo; autorizado: boolean; motivo: string }
-  | {
-      passo: "pendente";
-      aluno: AlunoResumo;
-      motivo: string;
-      horarioId?: string;
-      momentoISO: string;
-      metodo: MetodoRegisto;
-    }
-  | { passo: "confirmar-identidade"; aluno: AlunoResumo; momentoISO: string; metodo: MetodoRegisto };
+  // `idToken` é o único fio que liga os passos: quem, quando e como são
+  // sempre recalculados no servidor a partir dele (ver acoes.ts).
+  | { passo: "pendente"; aluno: AlunoResumo; motivo: string; idToken: string }
+  | { passo: "confirmar-identidade"; aluno: AlunoResumo; idToken: string };
 
 const ROTULOS_ESTADO: Record<string, string> = {
   autorizado: "Autorizado",
@@ -56,7 +50,7 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
 
   /** Comum ao caminho direto e à confirmação de identidade — ambos
    * devolvem o mesmo formato (ok / pendente / resultado final). */
-  function aplicarResultadoIdentificacao(resultado: ResultadoMovimento) {
+  function aplicarResultadoIdentificacao(resultado: ResultadoMovimento, idToken: string) {
     if (!resultado.ok) {
       setEstado({ passo: "erro", mensagem: resultado.erro });
       return;
@@ -66,9 +60,7 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
         passo: "pendente",
         aluno: resultado.aluno,
         motivo: resultado.motivo,
-        horarioId: resultado.horarioId,
-        momentoISO: resultado.momentoISO,
-        metodo: resultado.metodo,
+        idToken,
       });
       return;
     }
@@ -83,16 +75,10 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
 
   function responderContactoPais(paisAutorizaram: boolean) {
     if (estado.passo !== "pendente") return;
-    const { aluno, horarioId, momentoISO, metodo } = estado;
+    const { aluno, idToken } = estado;
 
     iniciarTransicao(async () => {
-      const resultado = await confirmarSaidaComPais(
-        aluno.id,
-        horarioId,
-        momentoISO,
-        metodo,
-        paisAutorizaram,
-      );
+      const resultado = await confirmarSaidaComPais(idToken, paisAutorizaram);
 
       if (!resultado.ok) {
         setEstado({ passo: "erro", mensagem: resultado.erro });
@@ -127,18 +113,17 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
       setEstado({
         passo: "confirmar-identidade",
         aluno: resultado.aluno,
-        momentoISO: resultado.momentoISO,
-        metodo: resultado.metodo,
+        idToken: resultado.idToken,
       });
     });
   }
 
   function responderIdentidade(eEsteAluno: boolean) {
     if (estado.passo !== "confirmar-identidade") return;
-    const { aluno, momentoISO, metodo } = estado;
+    const { idToken } = estado;
 
     iniciarTransicao(async () => {
-      const resultado = await confirmarIdentidadeQR(aluno.id, eEsteAluno, momentoISO, metodo);
+      const resultado = await confirmarIdentidadeQR(idToken, eEsteAluno);
 
       if (!resultado.ok) {
         setEstado({ passo: "erro", mensagem: resultado.erro });
@@ -155,7 +140,7 @@ export function PainelPortao({ linhasIniciais }: { linhasIniciais: LinhaRegisto[
         });
         return;
       }
-      aplicarResultadoIdentificacao(resultado);
+      aplicarResultadoIdentificacao(resultado, idToken);
     });
   }
 

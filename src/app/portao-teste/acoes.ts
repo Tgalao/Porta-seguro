@@ -34,7 +34,8 @@
 import { ligarBaseDados } from "@/lib/mongoose";
 import { exigirPerfil } from "@/lib/permissoes";
 import { Utilizador, Turma, Horario, Registo, Ocorrencia, TokenQR } from "@/models";
-import { validarTokenQR, proximoTipoRegisto } from "@/lib/regras";
+import type { ITokenQR } from "@/models";
+import { validarTokenQR, proximoTipoRegisto, encontrarBlocoADecorrer } from "@/lib/regras";
 import type { MetodoRegisto } from "@/lib/constantes";
 import {
   processarMovimento,
@@ -49,23 +50,83 @@ import {
 export type { AlunoResumo, LinhaRegisto, ResultadoConfirmacao };
 export type ResultadoIdentificacao = ResultadoMovimento;
 
+/**
+ * Tudo o que decide um movimento (QUEM, QUANDO e por que MÉTODO) sai do
+ * próprio código QR guardado na base de dados — nunca de parâmetros
+ * enviados pelo browser.
+ *
+ * Antes, o ecrã da portaria recebia `momentoISO` e `metodo` na resposta da
+ * leitura e devolvia-os no passo seguinte; como uma Server Action é um
+ * endereço HTTP normal, quem tivesse sessão de porteiro podia chamá-la
+ * diretamente com outra hora (apagando um atraso) ou com outro método
+ * (fazendo um movimento real passar por "simulação", que não conta para a
+ * assiduidade). Passando só o id do código, o servidor volta sempre a
+ * calcular estes valores a partir do que ele próprio gravou.
+ */
+interface ContextoDoCodigo {
+  tokenQR: ITokenQR;
+  momento: Date;
+  metodo: MetodoRegisto;
+}
+
+async function contextoDoCodigo(
+  idToken: string,
+): Promise<{ ok: true; contexto: ContextoDoCodigo } | { ok: false; erro: string }> {
+  const tokenQR = await TokenQR.findById(idToken);
+  if (!tokenQR) {
+    return { ok: false, erro: "Código QR não reconhecido." };
+  }
+  if (tokenQR.movimentoRegistadoEm) {
+    return { ok: false, erro: "Este código já deu origem a um movimento." };
+  }
+
+  return {
+    ok: true,
+    contexto: {
+      tokenQR,
+      // A hora do movimento é a da LEITURA (gravada pelo servidor em
+      // `usadoEm`), ou a hora simulada do próprio código quando existe.
+      momento: tokenQR.momentoSimulado ?? tokenQR.usadoEm ?? new Date(),
+      metodo: tokenQR.momentoSimulado ? "simulacao" : "qr",
+    },
+  };
+}
+
 /** Grava a saída pendente depois de o porteiro contactar os pais (RF04). */
 export async function confirmarSaidaComPais(
-  alunoId: string,
-  horarioId: string | undefined,
-  momentoISO: string,
-  metodo: MetodoRegisto,
+  idToken: string,
   paisAutorizaram: boolean,
 ): Promise<ResultadoConfirmacao> {
   const sessao = await exigirPerfil(["porteiro", "admin"]);
-  return confirmarSaidaComPaisPartilhado(
-    alunoId,
-    horarioId,
-    momentoISO,
+  await ligarBaseDados();
+
+  const resultado = await contextoDoCodigo(idToken);
+  if (!resultado.ok) return resultado;
+  const { tokenQR, momento, metodo } = resultado.contexto;
+
+  const aluno = await Utilizador.findById(tokenQR.alunoId).select("turmaId").lean();
+  if (!aluno) {
+    return { ok: false, erro: "Aluno já não existe." };
+  }
+
+  // O bloco de horário a que a saída diz respeito é recalculado aqui, com
+  // a mesma regra da decisão original — não vem do browser.
+  const horarios = aluno.turmaId ? await Horario.find({ turmaId: aluno.turmaId }).lean() : [];
+  const bloco = encontrarBlocoADecorrer(horarios, momento);
+
+  const confirmacao = await confirmarSaidaComPaisPartilhado(
+    tokenQR.alunoId.toString(),
+    bloco?._id.toString(),
+    momento.toISOString(),
     metodo,
     paisAutorizaram,
     sessao.user.id,
   );
+
+  if (confirmacao.ok) {
+    await TokenQR.updateOne({ _id: tokenQR._id }, { movimentoRegistadoEm: new Date() });
+  }
+  return confirmacao;
 }
 
 export type ResultadoLeituraQR =
@@ -74,13 +135,10 @@ export type ResultadoLeituraQR =
       ok: true;
       confirmarIdentidade: true;
       aluno: AlunoResumo;
-      /** Momento a usar para decidir o movimento — real, ou a hora
-       * simulada guardada no código (ver `gerarNovoTokenQR`). */
-      momentoISO: string;
-      /** "simulacao" quando o código foi gerado com uma hora simulada
-       * (só a conta de teste consegue isso) — para o registo final nunca
-       * se confundir com um movimento real. */
-      metodo: MetodoRegisto;
+      /** Id do código lido. É a ÚNICA coisa que o ecrã guarda entre passos:
+       * quem, quando e como são sempre recalculados no servidor a partir
+       * deste id (ver `contextoDoCodigo`). */
+      idToken: string;
     };
 
 /**
@@ -104,7 +162,6 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
   // simulada, quando existe.
   const momento = new Date();
   const momentoDecisao = tokenQR.momentoSimulado ?? momento;
-  const metodo: MetodoRegisto = tokenQR.momentoSimulado ? "simulacao" : "qr";
 
   // A direção esperada é calculada com a MESMA regra usada quando o código
   // foi gerado — se o aluno já teve outro movimento entretanto, deixa de
@@ -161,8 +218,7 @@ export async function lerCodigoQR(token: string): Promise<ResultadoLeituraQR> {
     ok: true,
     confirmarIdentidade: true,
     aluno: resumoDoAluno(aluno, turma?.nome, horarios, momentoDecisao),
-    momentoISO: momentoDecisao.toISOString(),
-    metodo,
+    idToken: tokenQR._id.toString(),
   };
 }
 
@@ -183,15 +239,20 @@ export type ResultadoConfirmacaoIdentidade =
  * registo a criar (ninguém entrou nem saiu).
  */
 export async function confirmarIdentidadeQR(
-  alunoId: string,
+  idToken: string,
   eEsteAluno: boolean,
-  momentoISO: string,
-  metodo: MetodoRegisto,
 ): Promise<ResultadoConfirmacaoIdentidade> {
   const sessao = await exigirPerfil(["porteiro", "admin"]);
   await ligarBaseDados();
 
-  const aluno = await Utilizador.findById(alunoId).lean();
+  const resultado = await contextoDoCodigo(idToken);
+  if (!resultado.ok) return resultado;
+  const { tokenQR, momento, metodo } = resultado.contexto;
+
+  // O aluno é o DONO do código lido — não um id enviado pelo ecrã. Assim
+  // não há forma de ler o código de uma pessoa e registar o movimento
+  // noutra.
+  const aluno = await Utilizador.findById(tokenQR.alunoId).lean();
   if (!aluno) {
     return { ok: false, erro: "Aluno já não existe." };
   }
@@ -210,5 +271,14 @@ export async function confirmarIdentidadeQR(
     };
   }
 
-  return processarMovimento(aluno, sessao.user.id, metodo, new Date(momentoISO));
+  const movimento = await processarMovimento(aluno, sessao.user.id, metodo, momento);
+
+  // Só marca o código como gasto quando um registo foi mesmo criado. Numa
+  // saída que fica pendente (à espera do contacto com os pais), o código
+  // tem de continuar utilizável para `confirmarSaidaComPais` o concluir.
+  if (movimento.ok && !movimento.pendente) {
+    await TokenQR.updateOne({ _id: tokenQR._id }, { movimentoRegistadoEm: new Date() });
+  }
+
+  return movimento;
 }
