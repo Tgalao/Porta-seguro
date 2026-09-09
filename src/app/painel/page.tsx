@@ -113,7 +113,7 @@ export default async function Painel({
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
         <div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Sessão iniciada como</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Bem-vindo</p>
           <h1 className="text-2xl font-bold">{sessao.user.name}</h1>
           <p className="text-sm text-blue-700 dark:text-blue-400">{ROTULO_PERFIL[sessao.user.perfil]}</p>
         </div>
