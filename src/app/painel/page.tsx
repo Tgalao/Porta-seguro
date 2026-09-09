@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { LogoTexto } from "@/components/logo-texto";
 import { exigirSessao } from "@/lib/permissoes";
 import { signOut } from "@/auth";
 import type { Perfil } from "@/lib/constantes";
@@ -72,7 +73,7 @@ export default async function Painel({
           <div className="flex items-center gap-3">
             <Logo />
             <div className="leading-tight">
-              <p className="font-semibold">PortãoSeguro</p>
+              <LogoTexto className="h-5" />
               <p className="text-xs text-slate-500 dark:text-slate-400">Painel</p>
             </div>
           </div>

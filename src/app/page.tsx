@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { Logo } from "@/components/logo";
+import { LogoTexto } from "@/components/logo-texto";
 
 /**
  * Página de entrada do site — pública, sem sessão iniciada.
@@ -24,7 +25,7 @@ export default async function PaginaInicial() {
           <div className="flex items-center gap-3">
             <Logo className="h-10 w-10" />
             <div className="leading-tight">
-              <p className="font-semibold">PortãoSeguro</p>
+              <LogoTexto className="h-5" />
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Registo de entradas e saídas
               </p>

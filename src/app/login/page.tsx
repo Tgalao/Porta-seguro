@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { Logo } from "@/components/logo";
+import { LogoTexto } from "@/components/logo-texto";
 import { redirect } from "next/navigation";
 import { FormularioCredenciais } from "./formulario-credenciais";
 import { entrarComGoogle } from "./acoes";
@@ -59,7 +60,9 @@ export default async function PaginaLogin({
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
             <Logo className="h-11 w-11" />
-            <h1 className="text-2xl font-bold">PortãoSeguro</h1>
+            <h1>
+              <LogoTexto className="h-7" />
+            </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Inicia sessão para continuar
             </p>
