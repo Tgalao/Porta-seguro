@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoEscola } from "@/components/logo-escola";
 import { exigirPerfil } from "@/lib/permissoes";
 import { ligarBaseDados } from "@/lib/mongoose";
 import { limitesDoDiaEmLisboa, formatarHora } from "@/lib/datas";
@@ -43,12 +44,7 @@ export default async function PaginaPortaoTeste() {
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
-            <div
-              aria-hidden
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-teal-600/50 bg-teal-50 text-[9px] font-semibold uppercase text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
-            >
-              Logo
-            </div>
+            <LogoEscola />
             <div className="leading-tight">
               <h1 className="font-semibold">Portão Teste</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">

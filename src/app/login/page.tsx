@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { LogoEscola } from "@/components/logo-escola";
 import { redirect } from "next/navigation";
 import { FormularioCredenciais } from "./formulario-credenciais";
 import { entrarComGoogle } from "./acoes";
@@ -57,12 +58,7 @@ export default async function PaginaLogin({
       <main className="flex flex-1 flex-col items-center justify-center p-8">
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
-            <div
-              aria-hidden
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-dashed border-teal-600/50 bg-teal-50 text-[9px] font-semibold uppercase text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
-            >
-              Logo
-            </div>
+            <LogoEscola className="h-11 w-11" />
             <h1 className="text-2xl font-bold">PortãoSeguro</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Inicia sessão para continuar

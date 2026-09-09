@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { LogoEscola } from "@/components/logo-escola";
 
 /**
  * Página de entrada do site — pública, sem sessão iniciada.
@@ -21,7 +22,7 @@ export default async function PaginaInicial() {
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
-            <EspacoLogo />
+            <LogoEscola className="h-10 w-10" />
             <div className="leading-tight">
               <p className="font-semibold">PortãoSeguro</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -83,22 +84,6 @@ export default async function PaginaInicial() {
           PortãoSeguro — projeto escolar da UFCD 10790, Projeto de Programação.
         </p>
       </footer>
-    </div>
-  );
-}
-
-/**
- * Lugar reservado para o logótipo da escola. Fica um quadrado com as
- * iniciais até o ficheiro existir: assim o cabeçalho já tem o espaço certo
- * e não salta quando a imagem for colocada em `public/`.
- */
-function EspacoLogo() {
-  return (
-    <div
-      aria-hidden
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-teal-600/50 bg-teal-50 text-[10px] font-semibold uppercase tracking-wide text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
-    >
-      Logo
     </div>
   );
 }
