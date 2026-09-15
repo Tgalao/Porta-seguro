@@ -103,7 +103,7 @@ export default async function Painel({
           >
             <button
               type="submit"
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition hover:scale-105 hover:border-red-400 hover:bg-red-50 hover:text-red-700 dark:border-slate-700 dark:hover:border-red-800 dark:hover:bg-red-950 dark:hover:text-red-300"
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm transition hover:scale-105 hover:border-red-600 hover:bg-red-600 hover:text-white dark:border-slate-700 dark:hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white"
             >
               Terminar sessão
             </button>
