@@ -12,6 +12,7 @@
  */
 
 import { formatarDataHora } from "@/lib/datas";
+import { EMAIL_CONTA_DE_TESTE_QR } from "@/lib/dispositivo";
 import type { Perfil, TipoRegisto } from "@/lib/constantes";
 
 /** Azul do resto do site (Tailwind blue-700), para o email ficar com a
@@ -252,6 +253,16 @@ export async function notificarLogin(
  *
  * Manda-se para o email da CONTA do aluno (não para um admin fixo): cada
  * aluno só recebe avisos sobre si próprio.
+ *
+ * EXCEÇÃO: a conta de teste (`EMAIL_CONTA_DE_TESTE_QR`) usa um domínio da
+ * escola real (eclisboa.net), que o Resend recusa entregar sem um domínio
+ * verificado — a mesma limitação do `EMAIL_2FA_DESTINO` (ver
+ * `enviarCodigoVerificacao`). Sem este desvio, o email desta conta falhava
+ * sempre, em silêncio, e nunca dava para mostrar este aviso a funcionar na
+ * defesa oral. Note-se que isto é só um problema da conta de DEMONSTRAÇÃO:
+ * as contas reais dos alunos ficam sujeitas à mesma limitação enquanto o
+ * Resend não tiver um domínio verificado — não há nada a corrigir no
+ * código para isso, é preciso mesmo verificar um domínio.
  */
 export async function notificarMovimento(
   nomeAluno: string,
@@ -261,6 +272,11 @@ export async function notificarMovimento(
   motivo: string,
   momento: Date,
 ): Promise<void> {
+  const destinatario =
+    emailAluno === EMAIL_CONTA_DE_TESTE_QR
+      ? process.env.EMAIL_2FA_DESTINO || emailAluno
+      : emailAluno;
+
   const tipoTexto = tipo === "entrada" ? "Entrada" : "Saída";
   const estadoTexto = autorizado ? "autorizada" : "NÃO autorizada";
   const quando = formatarDataHora(momento);
@@ -283,7 +299,7 @@ export async function notificarMovimento(
   );
 
   await enviarEmail(
-    emailAluno,
+    destinatario,
     `PortãoSeguro: ${tipoTexto.toLowerCase()} registada — ${quando}`,
     texto,
     html,
