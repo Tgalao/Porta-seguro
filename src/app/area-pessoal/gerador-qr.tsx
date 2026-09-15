@@ -18,6 +18,21 @@ function segundosRestantes(validoAteISO: string): number {
   return Math.max(0, restam);
 }
 
+/**
+ * Data e hora ATUAIS deste computador ("do browser") — mesmo critério do
+ * `/admin/simulacao` (ver `formulario-simulacao.tsx`): poupa escrever a
+ * data à mão quando se quer só testar "agora mesmo". A pessoa continua
+ * livre para mudar os campos depois.
+ */
+function agoraNoBrowser(): { data: string; hora: string } {
+  const agora = new Date();
+  const doisDigitos = (n: number) => String(n).padStart(2, "0");
+  return {
+    data: `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}`,
+    hora: `${doisDigitos(agora.getHours())}:${doisDigitos(agora.getMinutes())}`,
+  };
+}
+
 export function GeradorQR({
   tokenInicial,
   podeGerar,
@@ -39,8 +54,8 @@ export function GeradorQR({
   const [erro, setErro] = useState<string | null>(null);
   const [aGerar, iniciarTransicao] = useTransition();
   const [simularHora, setSimularHora] = useState(false);
-  const [dataSimulada, setDataSimulada] = useState("");
-  const [horaSimulada, setHoraSimulada] = useState("");
+  const [{ data: dataSimulada, hora: horaSimulada }, setDataHoraSimulada] =
+    useState(agoraNoBrowser);
 
   // Um único intervalo faz as duas coisas: atualiza a contagem decrescente
   // E pergunta ao servidor se o código já foi lido — não vale a pena dois
@@ -122,13 +137,17 @@ export function GeradorQR({
               <input
                 type="date"
                 value={dataSimulada}
-                onChange={(evento) => setDataSimulada(evento.target.value)}
+                onChange={(evento) =>
+                  setDataHoraSimulada((atual) => ({ ...atual, data: evento.target.value }))
+                }
                 className="rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
               />
               <input
                 type="time"
                 value={horaSimulada}
-                onChange={(evento) => setHoraSimulada(evento.target.value)}
+                onChange={(evento) =>
+                  setDataHoraSimulada((atual) => ({ ...atual, hora: evento.target.value }))
+                }
                 className="rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
               />
             </div>
