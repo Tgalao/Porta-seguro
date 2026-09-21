@@ -23,7 +23,7 @@ export default async function PaginaInicial() {
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-blue-50/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
-            <Logo className="h-10 w-10" />
+            <Logo className="h-10 w-10" decorativa />
             <div className="leading-tight">
               <LogoTexto className="h-5" />
               <p className="text-xs text-slate-500 dark:text-slate-400">

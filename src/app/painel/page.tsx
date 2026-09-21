@@ -85,7 +85,7 @@ export default async function Painel({
       <header className="border-b border-slate-200 bg-blue-50 dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
-            <Logo />
+            <Logo decorativa />
             <div className="leading-tight">
               <LogoTexto className="h-5" />
               <p className="text-xs text-slate-500 dark:text-slate-400">Painel</p>
