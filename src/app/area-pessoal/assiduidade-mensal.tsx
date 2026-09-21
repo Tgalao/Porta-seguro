@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 export interface LinhaDiaAssinalar {
   dataFormatada: string;
@@ -36,6 +36,7 @@ export function AssiduidadeMensal({
   diasAssinalar: LinhaDiaAssinalar[];
 }) {
   const [aberto, setAberto] = useState(false);
+  const idLista = useId();
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -69,6 +70,7 @@ export function AssiduidadeMensal({
                 type="button"
                 onClick={() => setAberto((atual) => !atual)}
                 aria-expanded={aberto}
+                aria-controls={idLista}
                 className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-left text-sm font-medium transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-blue-700"
               >
                 <span>
@@ -81,7 +83,7 @@ export function AssiduidadeMensal({
               </button>
 
               {aberto && (
-                <ul className="mt-2 flex flex-col gap-1 text-sm">
+                <ul id={idLista} className="mt-2 flex flex-col gap-1 text-sm">
                   {diasAssinalar.map((dia, indice) => (
                     <li
                       key={indice}
@@ -147,7 +149,7 @@ function IconeChevron({ aberto }: { aberto: boolean }) {
       height="16"
       fill="none"
       aria-hidden
-      className={`shrink-0 text-slate-400 transition-transform duration-150 ${aberto ? "rotate-180" : ""}`}
+      className={`shrink-0 text-slate-500 dark:text-slate-400 transition-transform duration-150 ${aberto ? "rotate-180" : ""}`}
     >
       <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

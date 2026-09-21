@@ -59,7 +59,7 @@ export default async function PaginaLogin({
       <main className="flex flex-1 flex-col items-center justify-center p-8">
         <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
-            <Logo className="h-11 w-11" />
+            <Logo className="h-11 w-11" decorativa />
             <h1>
               <LogoTexto className="h-7" />
             </h1>
@@ -76,7 +76,7 @@ export default async function PaginaLogin({
 
           <FormularioCredenciais />
 
-          <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
+          <div className="my-6 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
             ou
             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />

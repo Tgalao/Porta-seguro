@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { NOMES_DIAS_SEMANA } from "@/lib/datas";
 
 /** Mesmo ponto de corte do `lg:` do Tailwind — é a partir daqui que
@@ -52,6 +52,7 @@ export function HorarioSemanal({
   // Só os dias que têm mesmo aulas, pela ordem da semana.
   const diasComAulas = [...new Set(blocos.map((b) => b.diaSemana))].sort((a, b) => a - b);
 
+  const idBase = useId();
   const [diasAbertos, setDiasAbertos] = useState<ReadonlySet<number>>(
     () => new Set(diaEmDestaque !== undefined ? [diaEmDestaque] : []),
   );
@@ -116,6 +117,7 @@ export function HorarioSemanal({
               type="button"
               onClick={() => alternar(dia)}
               aria-expanded={aberto}
+              aria-controls={`${idBase}-dia-${dia}`}
               className={`flex w-full items-center justify-between gap-2 text-left ${tamanhoGrande ? "p-4 lg:p-5" : "p-3.5"}`}
             >
               <span
@@ -136,6 +138,7 @@ export function HorarioSemanal({
 
             {aberto && (
               <ul
+                id={`${idBase}-dia-${dia}`}
                 className={`flex flex-col px-3.5 pb-3.5 ${tamanhoGrande ? "gap-3 lg:px-5 lg:pb-5 lg:text-base" : "gap-1.5 text-sm"}`}
               >
                 {doDia.map((bloco, indice) => (
@@ -181,7 +184,7 @@ function IconeChevron({ aberto }: { aberto: boolean }) {
       height="16"
       fill="none"
       aria-hidden
-      className={`shrink-0 text-slate-400 transition-transform duration-150 ${aberto ? "rotate-180" : ""}`}
+      className={`shrink-0 text-slate-500 dark:text-slate-400 transition-transform duration-150 ${aberto ? "rotate-180" : ""}`}
     >
       <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
