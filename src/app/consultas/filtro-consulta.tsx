@@ -17,7 +17,7 @@ const ROTULOS_SITUACAO: Record<string, string> = {
 };
 
 const CLASSE_CAMPO =
-  "rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent";
+  "rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent";
 
 export function FiltroConsulta({
   alunos,

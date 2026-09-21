@@ -39,7 +39,7 @@ export function FormularioTurma({
           name="nome"
           required
           defaultValue={turmaInicial?.nome}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -51,7 +51,7 @@ export function FormularioTurma({
           min={1}
           required
           defaultValue={turmaInicial?.ano}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -61,7 +61,7 @@ export function FormularioTurma({
           name="cursoId"
           required
           defaultValue={turmaInicial?.cursoId ?? ""}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         >
           <option value="" disabled>
             — Escolhe um curso —
@@ -79,7 +79,7 @@ export function FormularioTurma({
         <select
           name="diretorTurmaId"
           defaultValue={turmaInicial?.diretorTurmaId ?? ""}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         >
           <option value="">— Sem diretor(a) atribuído(a) —</option>
           {diretores.map((diretor) => (

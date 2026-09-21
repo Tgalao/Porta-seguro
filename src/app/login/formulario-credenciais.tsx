@@ -34,7 +34,7 @@ export function FormularioCredenciais() {
           autoComplete="email"
           value={email}
           onChange={(evento) => setEmail(evento.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -48,7 +48,7 @@ export function FormularioCredenciais() {
             autoComplete="current-password"
             value={password}
             onChange={(evento) => setPassword(evento.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
           />
           <button
             type="button"
@@ -79,7 +79,7 @@ export function FormularioCredenciais() {
             placeholder="000000"
             value={codigo}
             onChange={(evento) => setCodigo(evento.target.value.replace(/\D/g, ""))}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-center text-lg tracking-[0.4em] focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-center text-lg tracking-[0.4em] focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
           />
         </label>
       )}

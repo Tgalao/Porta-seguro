@@ -132,7 +132,7 @@ export function FormularioSimulacao({ alunos }: { alunos: AlunoParaSeletor[] }) 
               value={data}
               onChange={(evento) => setDataHora((atual) => ({ ...atual, data: evento.target.value }))}
               required
-              className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+              className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -142,7 +142,7 @@ export function FormularioSimulacao({ alunos }: { alunos: AlunoParaSeletor[] }) 
               value={hora}
               onChange={(evento) => setDataHora((atual) => ({ ...atual, hora: evento.target.value }))}
               required
-              className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+              className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800"
             />
           </label>
           <button

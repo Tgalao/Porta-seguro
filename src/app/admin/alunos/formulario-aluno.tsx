@@ -41,7 +41,7 @@ export function FormularioAluno({
           name="nomeCompleto"
           required
           defaultValue={alunoInicial?.nomeCompleto}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -52,7 +52,7 @@ export function FormularioAluno({
           type="email"
           required
           defaultValue={alunoInicial?.email}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -62,7 +62,7 @@ export function FormularioAluno({
           name="palavraPasse"
           type="password"
           autoComplete="new-password"
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         />
       </label>
 
@@ -73,7 +73,7 @@ export function FormularioAluno({
             name="numeroAluno"
             type="number"
             defaultValue={alunoInicial?.numeroAluno}
-            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
           />
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
@@ -81,7 +81,7 @@ export function FormularioAluno({
           <input
             name="numeroCartao"
             defaultValue={alunoInicial?.numeroCartao}
-            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
           />
         </label>
       </div>
@@ -91,7 +91,7 @@ export function FormularioAluno({
         <select
           name="turmaId"
           defaultValue={alunoInicial?.turmaId ?? ""}
-          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-transparent"
+          className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-transparent"
         >
           <option value="">— Sem turma atribuída —</option>
           {turmas.map((turma) => (
