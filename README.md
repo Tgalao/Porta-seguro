@@ -1,36 +1,35 @@
-# PortãoSeguro
+# PortaoSeguro (Secure Gate)
 
-Sistema de registo de entradas e saídas escolares. Projeto da UFCD 10790 —
-Projeto de Programação.
+School entry/exit logging system. Project for UFCD 10790 - Programming Project.
 
 ## Stack
 
 - Next.js (App Router) + React + TypeScript
 - MongoDB Atlas + Mongoose
-- Auth.js (email/password e conta Google), com Argon2id (`@node-rs/argon2`)
+- Auth.js (email/password and Google account), with Argon2id (@node-rs/argon2)
 - Tailwind CSS
 
-## Como correr localmente
+## Running locally
 
-1. Copiar `.env.example` para `.env.local` e preencher as variáveis (ver
-   instruções dentro do próprio ficheiro).
-2. Instalar as dependências:
+Copy `.env.example` to `.env.local` and fill in the variables (see instructions inside the file itself).
 
-   ```bash
-   npm install
-   ```
+Install dependencies:
 
-3. Arrancar o servidor de desenvolvimento:
+```bash
+npm install
+```
 
-   ```bash
-   npm run dev
-   ```
+Start the dev server:
 
-4. Abrir [http://localhost:3000](http://localhost:3000).
+```bash
+npm run dev
+```
 
-## Scripts úteis
+Open http://localhost:3000.
 
-- `npm run dev` — servidor de desenvolvimento
-- `npm run build` — build de produção
-- `npm run lint` — ESLint
-- `npm run typecheck` — verificação de tipos TypeScript
+## Useful scripts
+
+- `npm run dev` - dev server
+- `npm run build` - production build
+- `npm run lint` - ESLint
+- `npm run typecheck` - TypeScript type checking
